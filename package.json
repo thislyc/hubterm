@@ -1,0 +1,36 @@
+{
+  "name": "hubterm",
+  "productName": "HubTerm",
+  "version": "2.7.0",
+  "description": "HubTerm — one-click SSH through any bastion host",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node test/automaton.test.js && node test/sessions.test.js && node test/store.test.js && node test/sshconfig.test.js && node test/zmodem.test.js && node test/mcp.test.js && node test/ui-audit.test.js",
+    "icon": "python3 assets/make_icon.py",
+    "icon:win": "python3.13 scripts/make_ico.py",
+    "package": "sh scripts/assemble.sh",
+    "package:intel": "sh scripts/assemble.sh x64",
+    "package:win": "node scripts/assemble-win.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "ssh2": "^1.16.0",
+    "xterm": "5.3.0",
+    "xterm-addon-fit": "0.8.0",
+    "xterm-addon-search": "0.13.0",
+    "xterm-addon-web-links": "0.9.0",
+    "xterm-addon-webgl": "0.16.0",
+    "zmodem.js": "^0.1.10"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-packager": "^17.1.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thislyc/hubterm"
+  },
+  "license": "MIT",
+  "author": "Lu Yicheng"
+}
