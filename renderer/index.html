@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="color-scheme" content="dark light">
+  <title>HubTerm</title>
+  <link rel="stylesheet" href="../node_modules/xterm/css/xterm.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <div class="side-top">
+        <div class="wordmark">Hub<span>Term</span></div>
+      </div>
+      <div class="side-search">
+        <svg viewBox="0 0 16 16" width="13" height="13"><path fill="currentColor" d="M6.5 1a5.5 5.5 0 1 0 3.38 9.84l3.64 3.64a.75.75 0 0 0 1.06-1.06l-3.64-3.64A5.5 5.5 0 0 0 6.5 1Zm0 1.5a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/></svg>
+        <input id="search" data-i18n-placeholder="search.placeholder" placeholder="搜索会话" spellcheck="false" autocomplete="off">
+      </div>
+      <div id="tree"></div>
+      <div class="side-foot">
+        <button id="btn-new" data-i18n-title="btn.newSession.title" title="新建会话 ⌘⇧N">
+          <svg viewBox="0 0 14 14" width="12" height="12"><path d="M7 1.5v11M1.5 7h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span data-i18n="btn.newSession">新建会话</span>
+        </button>
+        <button id="btn-quick" data-i18n-title="btn.quickConnect.title" title="快速连接（临时，不保存） ⌘N">
+          <svg viewBox="0 0 14 14" width="13" height="13"><path d="M8.5 1 3 8h3.5L6 13l5.5-7H8z" fill="currentColor"/></svg>
+          <span data-i18n="btn.quickConnect">快速连接</span>
+        </button>
+      </div>
+    </aside>
+
+    <div id="side-resizer" data-i18n-title="sidebar.resizer.title" title="拖拽调整宽度 · 双击复位"></div>
+
+    <main id="main">
+      <div id="tabbar">
+        <div id="tabs"></div>
+        <div id="tabbar-spacer"></div>
+        <div id="tabbar-actions">
+          <button class="tbtn" id="btn-sidebar" data-i18n-title="btn.sidebar.title" title="收起侧边栏 ⌘B">
+            <svg viewBox="0 0 16 16" width="15" height="15"><rect x="1.5" y="2.5" width="13" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6 3v10" stroke="currentColor" stroke-width="1.3"/><rect x="3" y="5" width="2" height="6" rx=".8" fill="currentColor"/></svg>
+          </button>
+          <button class="tbtn" id="btn-snippets" data-i18n-title="btn.snippets.title" title="快捷命令 ⌘⇧K">
+            <svg viewBox="0 0 16 16" width="15" height="15"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M4.5 2.5 11 8l-6.5 5.5M8.5 13.5h3"/></svg>
+          </button>
+          <button class="tbtn" id="btn-sftp" data-i18n-title="btn.sftp.title" title="文件浏览 ⌘⇧F">
+            <svg viewBox="0 0 16 16" width="15" height="15"><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" d="M1.5 4A1.5 1.5 0 0 1 3 2.5h3l1.5 2H13A1.5 1.5 0 0 1 14.5 6v6A1.5 1.5 0 0 1 13 13.5H3A1.5 1.5 0 0 1 1.5 12z"/></svg>
+          </button>
+          <button class="tbtn" id="btn-forwards" data-i18n-title="btn.forwards.title" title="端口转发 ⌘L">
+            <svg viewBox="0 0 16 16" width="15" height="15"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M1.5 5.5h9M8 3l2.7 2.5L8 8M14.5 10.5h-9M8 13 5.3 10.5 8 8"/></svg>
+          </button>
+          <button class="tbtn" id="btn-theme" data-i18n-title="btn.theme.title" title="外观主题">
+            <svg viewBox="0 0 16 16" width="15" height="15"><circle cx="8" cy="8" r="5.8" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 2.2a5.8 5.8 0 0 1 0 11.6z" fill="currentColor"/></svg>
+          </button>
+          <button class="tbtn" id="btn-help" data-i18n-title="btn.help.title" title="设置与快捷键 ⌘/">
+            <svg viewBox="0 0 16 16" width="15" height="15"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" d="M6.7 1.8h2.6l.4 1.6c.42.16.8.38 1.15.66l1.55-.47 1.3 2.25-1.16 1.1a5.6 5.6 0 0 1 0 1.32l1.16 1.1-1.3 2.25-1.55-.47c-.35.28-.73.5-1.15.66l-.4 1.6H6.7l-.4-1.6a4.6 4.6 0 0 1-1.15-.66l-1.55.47-1.3-2.25 1.16-1.1a5.6 5.6 0 0 1 0-1.32L2.3 5.84l1.3-2.25 1.55.47c.35-.28.73-.5 1.15-.66z"/><circle cx="8" cy="8" r="1.9" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="views">
+        <div id="welcome">
+          <svg class="w-logo" viewBox="0 0 64 64" width="72" height="72">
+            <rect x="2" y="2" width="60" height="60" rx="14" style="fill:var(--bg-panel);stroke:var(--border)" stroke-opacity=".5"/>
+            <path d="M18 22l12 10-12 10" fill="none" style="stroke:var(--accent)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="34" y="38" width="12" height="5" rx="2.5" style="fill:var(--green)"/>
+          </svg>
+          <h1>HubTerm</h1>
+          <p class="pitch" data-i18n="welcome.pitch">通过任意堡垒机，一键直达你的服务器</p>
+          <div class="welcome-actions">
+            <button id="w-open" class="btn-primary"><span data-i18n="welcome.open">打开会话</span> <kbd>⌘P</kbd></button>
+            <button id="w-new" class="btn-ghost"><span data-i18n="btn.newSession2">新建会话</span> <kbd>⌘⇧N</kbd></button>
+          </div>
+          <div id="recents"></div>
+          <p class="tips"><span data-i18n="welcome.tipsA">终端里</span> <kbd>rz</kbd> <span data-i18n="welcome.tipsB">上传文件 · 右键会话更多操作</span> · <kbd>⌘/</kbd> <span data-i18n="welcome.tipsC">全部快捷键</span></p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 快速打开面板 -->
+  <div id="palette-mask" class="hidden">
+    <div id="palette">
+      <input id="palette-input" data-i18n-placeholder="palette.placeholder" placeholder="输入名称 / IP / 分组，回车连接…" spellcheck="false" autocomplete="off">
+      <div id="palette-list"></div>
+      <div class="palette-hint" data-i18n="palette.hint">↑↓ 选择 · ⏎ 连接 · esc 关闭</div>
+    </div>
+  </div>
+
+  <!-- 快捷命令面板 -->
+  <div id="snippets-panel" class="hidden">
+    <div class="sn-head">
+      <span data-i18n="snippets.title">快捷命令</span>
+      <label class="sn-broadcast"><input type="checkbox" id="sn-broadcast"> <span data-i18n="snippets.broadcast">广播到全部已连接标签</span></label>
+      <button id="sn-add" data-i18n-title="snippets.add.title" title="新增命令">＋</button>
+      <button id="sn-close">✕</button>
+    </div>
+    <div id="sn-list"><div class="sn-empty" data-i18n="snippets.empty">还没有快捷命令，点 ＋ 添加（如：df -h、docker ps、kubectl get pods）</div></div>
+  </div>
+
+  <!-- SFTP 抽屉 -->
+  <div id="sftp-drawer" class="hidden">
+    <div class="sf-head">
+      <span data-i18n="sftp.title">文件浏览</span>
+      <input id="sf-path" spellcheck="false">
+      <button id="sf-up" data-i18n-title="sftp.up" title="上一级">↑</button>
+      <button id="sf-refresh" data-i18n-title="sftp.refresh" title="刷新">⟳</button>
+      <button id="sf-mkdir" data-i18n-title="sftp.mkdir" title="新建文件夹">＋</button>
+      <button id="sf-upload" data-i18n-title="sftp.upload" title="上传文件">⬆</button>
+      <button id="sf-close">✕</button>
+    </div>
+    <div id="sf-list"></div>
+    <div class="sf-foot">
+      <span id="sf-status" data-i18n="sftp.ready">就绪</span>
+      <button id="sf-cancel" class="hidden" data-i18n="sftp.cancel">取消传输</button>
+    </div>
+  </div>
+
+  <div id="findbar" class="hidden">
+    <input id="find-input" data-i18n-placeholder="find.placeholder" placeholder="在终端中搜索…" spellcheck="false">
+    <button id="find-prev" data-i18n-title="find.prev" title="上一个 (⇧⏎)">↑</button>
+    <button id="find-next" data-i18n-title="find.next" title="下一个 (⏎)">↓</button>
+    <button id="find-close" data-i18n-title="find.close" title="关闭 (esc)">✕</button>
+  </div>
+
+  <!-- ZMODEM 传输面板 -->
+  <div id="zmodem-panel" class="hidden">
+    <div class="zm-head"><span id="zm-icon"></span><span id="zm-title" data-i18n="zmodem.transferring">传输中</span><button id="zm-cancel" data-i18n="common.cancel">取消</button></div>
+    <div class="zm-bar"><div id="zm-progress"></div></div>
+    <div id="zm-detail">—</div>
+  </div>
+
+  <!-- MFA / 密码 凭证弹窗 -->
+  <div id="mfa-modal" class="modal-mask hidden">
+    <div class="modal">
+      <h2 id="cred-title" data-i18n="mfa.title">MFA 验证码</h2>
+      <p id="mfa-prompt" data-i18n="mfa.prompt">请输入验证码</p>
+      <input id="mfa-input" inputmode="numeric" autocomplete="one-time-code" spellcheck="false">
+      <label class="chk" id="cred-remember-row" style="margin:-8px 0 14px"><input type="checkbox" id="cred-remember"> <span data-i18n="mfa.remember">记住密码（保存到会话，同主机一并更新）</span></label>
+      <div class="modal-actions">
+        <button id="mfa-cancel" class="btn-ghost" data-i18n="common.cancel">取消</button>
+        <button id="mfa-ok" class="btn-primary" data-i18n="common.ok">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 快速连接 -->
+  <div id="quick-modal" class="modal-mask hidden">
+    <div class="modal">
+      <h2 data-i18n="quick.title">快速连接</h2>
+      <div class="form-grid">
+        <label data-i18n="quick.host">主机</label><input id="qc-host" placeholder="192.168.1.10 或 host.example.com" spellcheck="false">
+        <label data-i18n="quick.port">端口</label><input id="qc-port" value="22" inputmode="numeric">
+        <label data-i18n="quick.user">用户</label><input id="qc-user" placeholder="root" spellcheck="false">
+        <label data-i18n="quick.pass">密码</label><input id="qc-pass" type="password">
+      </div>
+      <div class="modal-actions">
+        <button id="qc-cancel" class="btn-ghost" data-i18n="common.cancel">取消</button>
+        <button id="qc-ok" class="btn-primary" data-i18n="quick.connect">连接</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新建/编辑会话 -->
+  <div id="edit-modal" class="modal-mask hidden">
+    <div class="modal wide">
+      <h2 id="edit-title" data-i18n="edit.titleNew">新建会话</h2>
+
+      <div class="form-sec"><h3 data-i18n="edit.sec.connection">连接</h3>
+        <div class="form-grid">
+          <label data-i18n="edit.name">名称</label><input id="ed-name" data-i18n-placeholder="edit.name.ph" placeholder="如 10.1.2.3-订单库" spellcheck="false">
+          <label data-i18n="edit.group">分组</label><input id="ed-group" data-i18n-placeholder="edit.group.ph" placeholder="如 生产/k8s（斜杠分级，可留空）" spellcheck="false">
+          <label data-i18n="edit.host">主机</label><input id="ed-host" data-i18n-placeholder="edit.host.ph" placeholder="IP 或域名" spellcheck="false">
+          <label data-i18n="quick.port2">端口</label><input id="ed-port" value="22" inputmode="numeric">
+          <label data-i18n="edit.user">用户</label><input id="ed-user" placeholder="root" spellcheck="false">
+        </div>
+      </div>
+
+      <div class="form-sec"><h3 data-i18n="edit.sec.auth">认证</h3>
+        <div class="form-grid">
+          <label data-i18n="edit.method">方式</label>
+          <select id="ed-auth">
+            <option value="password" data-i18n="edit.auth.password">密码</option>
+            <option value="key" data-i18n="edit.auth.key">私钥文件</option>
+            <option value="agent">SSH Agent</option>
+          </select>
+          <label data-i18n="quick.pass2">密码</label><input id="ed-pass" type="password" data-i18n-placeholder="edit.pass.ph" placeholder="留空 = 连接时询问">
+          <label id="ed-l-keypath" data-i18n="edit.keyPath">私钥路径</label><input id="ed-keypath" placeholder="~/.ssh/id_ed25519" spellcheck="false" style="font-family:var(--mono);font-size:12px">
+          <label id="ed-l-keypass" data-i18n="edit.keyPass">私钥口令</label><input id="ed-keypass" type="password" data-i18n-placeholder="edit.keyPass.ph" placeholder="无口令可留空">
+        </div>
+      </div>
+
+      <div class="form-sec"><h3><span data-i18n="edit.sec.autologin">自动登录</span> <span class="sec-opt" data-i18n="edit.optional">可选</span></h3>
+        <div class="form-grid">
+          <label style="align-self:start;padding-top:8px" data-i18n="edit.rules">登录规则</label>
+          <div id="ed-rules-wrap">
+            <div id="ed-rules-list"></div>
+            <button id="ed-rule-add" type="button" data-i18n="edit.addRule">＋ 添加一步</button>
+            <p class="rules-hint" data-i18n-html="edit.rulesHint">按顺序自动应答：等到「等待文本」出现 → 发送「内容」＋回车，全部完成即登录成功。适合堡垒机菜单、二次认证。<br>示例：等 <code>Opt&gt;</code> 发 <code>10.0.0.1</code>；等 <code>user:</code> 发 <code>root</code>。支持变量 <code>$PASSWORD</code> / <code>$TARGET</code>。</p>
+          </div>
+          <label data-i18n="edit.postLogin">登录后执行</label><input id="ed-post" data-i18n-placeholder="edit.postLogin.ph" placeholder="如 sudo -i（登录成功后自动执行）" spellcheck="false">
+          <label data-i18n="edit.targetNote">目标备注</label><input id="ed-target" data-i18n-placeholder="edit.targetNote.ph" placeholder="可选，展示用（如最终登录的内网 IP）" spellcheck="false">
+        </div>
+      </div>
+
+      <details id="ed-advanced">
+        <summary data-i18n="edit.advanced">高级选项（终端 / 外观 / 连接行为）</summary>
+        <div class="form-grid adv">
+          <label data-i18n="edit.termType">终端类型</label>
+          <select id="ed-emulation">
+            <option value="" data-i18n="edit.emulation.default">xterm-256color（默认）</option>
+            <option value="xterm">xterm</option>
+            <option value="vt100">vt100</option>
+            <option value="linux">linux</option>
+            <option value="ansi">ansi</option>
+          </select>
+          <label data-i18n="edit.scrollback">回滚行数</label>
+          <select id="ed-scrollback">
+            <option value="0" data-i18n="edit.scrollback.default">10000（默认）</option>
+            <option value="2000">2000</option>
+            <option value="5000">5000</option>
+            <option value="50000">50000</option>
+          </select>
+          <label data-i18n="edit.fontSize">字号覆盖</label>
+          <select id="ed-font">
+            <option value="0" data-i18n="edit.font.follow">跟随全局（⌘± 可调）</option>
+            <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+            <option value="13">13</option><option value="14">14</option><option value="16">16</option>
+            <option value="18">18</option><option value="20">20</option>
+          </select>
+          <label data-i18n="edit.scheme">配色</label>
+          <select id="ed-scheme">
+            <option value="" data-i18n="edit.scheme.follow">跟随界面主题（默认）</option>
+            <option value="mocha">Catppuccin Mocha</option>
+            <option value="latte">Catppuccin Latte</option>
+            <option value="dracula">Dracula</option>
+            <option value="solarized">Solarized Dark</option>
+            <option value="solarized-light">Solarized Light</option>
+            <option value="classic" data-i18n="edit.scheme.classic">经典黑</option>
+          </select>
+          <label data-i18n="edit.cursor">光标</label>
+          <div id="ed-cursor-row">
+            <select id="ed-cursor">
+              <option value="" data-i18n="edit.cursor.block">方块（默认）</option>
+              <option value="bar" data-i18n="edit.cursor.bar">竖线</option>
+              <option value="underline" data-i18n="edit.cursor.underline">下划线</option>
+            </select>
+            <label class="chk" style="white-space:nowrap"><input type="checkbox" id="ed-blink"> <span data-i18n="edit.cursor.blink">闪烁</span></label>
+          </div>
+          <label data-i18n="edit.reconnect">断线自动重连</label>
+          <select id="ed-reconnect">
+            <option value="0" data-i18n="edit.reconnect.off">关闭（默认）</option>
+            <option value="1" data-i18n="edit.reconnect.n1">自动重试 1 次</option>
+            <option value="3" data-i18n="edit.reconnect.n3">自动重试 3 次</option>
+            <option value="5" data-i18n="edit.reconnect.n5">自动重试 5 次</option>
+          </select>
+          <label>Keepalive</label>
+          <select id="ed-keepalive">
+            <option value="0" data-i18n="edit.keepalive.default">15 秒（默认）</option>
+            <option value="-1" data-i18n="common.off">关闭</option>
+            <option value="10" data-i18n="edit.keepalive.10">10 秒</option>
+            <option value="30" data-i18n="edit.keepalive.30">30 秒</option>
+            <option value="60" data-i18n="edit.keepalive.60">60 秒</option>
+          </select>
+          <label data-i18n="edit.sessionLog">会话日志</label>
+          <select id="ed-logmode">
+            <option value="" data-i18n="edit.log.follow">跟随全局设置（默认）</option>
+            <option value="on" data-i18n="edit.log.on">强制开启</option>
+            <option value="off" data-i18n="edit.log.off">强制关闭</option>
+          </select>
+        </div>
+      </details>
+
+      <div class="modal-actions">
+        <button id="ed-cancel" class="btn-ghost" data-i18n="common.cancel">取消</button>
+        <button id="ed-ok" class="btn-primary" data-i18n="common.save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 快捷命令编辑 -->
+  <div id="snippet-modal" class="modal-mask hidden">
+    <div class="modal">
+      <h2 id="snm-title" data-i18n="snippets.newTitle">新增快捷命令</h2>
+      <div class="form-grid">
+        <label data-i18n="edit.name2">名称</label><input id="snm-name" data-i18n-placeholder="snippets.name.ph" placeholder="如 看日志" spellcheck="false">
+        <label style="align-self:start;padding-top:7px" data-i18n="snippets.command">命令</label><textarea id="snm-cmd" rows="3" placeholder="tail -f /var/log/xxx.log"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button id="snm-cancel" class="btn-ghost" data-i18n="common.cancel">取消</button>
+        <button id="snm-ok" class="btn-primary" data-i18n="common.save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 端口转发 -->
+  <div id="fwd-modal" class="modal-mask hidden">
+    <div class="modal wide">
+      <h2><span data-i18n="fwd.title">端口转发</span> <span id="fwd-session-name" class="fwd-name"></span></h2>
+      <p class="fwd-tip" data-i18n="fwd.tip">把远端可达的服务映射到本机。堡垒机会话可借此访问内网 Web/DB（如 127.0.0.1:8080 → 10.x.x.x:8080）。</p>
+      <div id="fwd-list"></div>
+      <div class="fwd-add">
+        <input id="fwd-listen" data-i18n-placeholder="fwd.listen.ph" placeholder="本机端口" inputmode="numeric" style="width:90px">
+        <span>→</span>
+        <input id="fwd-host" data-i18n-placeholder="fwd.host.ph" placeholder="目标主机（内网IP）" style="width:160px">
+        <input id="fwd-port" data-i18n-placeholder="fwd.port.ph" placeholder="目标端口" inputmode="numeric" style="width:90px">
+        <button id="fwd-add-btn" class="btn-primary" style="padding:5px 14px" data-i18n="fwd.add">添加</button>
+      </div>
+      <div class="modal-actions"><button id="fwd-close" class="btn-ghost" data-i18n="common.close">关闭</button></div>
+    </div>
+  </div>
+
+  <!-- 设置（快捷键 + 偏好） -->
+  <div id="help-modal" class="modal-mask hidden">
+    <div class="modal wide">
+      <div class="modal-title" data-i18n="settings.title">设置</div>
+      <h2 data-i18n="settings.shortcuts">快捷键</h2>
+      <div class="help-grid">
+        <kbd>⌘P</kbd><span data-i18n="sc.palette">快速打开会话（模糊搜索）</span>
+        <kbd>⌘N</kbd><span data-i18n="sc.quick">快速连接</span>
+        <kbd>⌘⇧N</kbd><span data-i18n="sc.new">新建会话</span>
+        <kbd>⌘E</kbd><span data-i18n="sc.edit">编辑当前会话</span>
+        <kbd>⌘W</kbd><span data-i18n="sc.closeTab">关闭标签</span>
+        <kbd>⌘R</kbd><span data-i18n="sc.reconnect">重新连接</span>
+        <kbd>⌘C</kbd><span data-i18n="sc.copy">复制（终端选区 / 输入框选区）</span>
+        <kbd>⌘V</kbd><span data-i18n="sc.paste">粘贴到终端 / 输入框</span>
+        <kbd>⌘A</kbd><span data-i18n="sc.selectAll">全选</span>
+        <kbd>⌘F</kbd><span data-i18n="sc.find">终端内搜索</span>
+        <kbd>⌘B</kbd><span data-i18n="sc.sidebar">侧边栏开关</span>
+        <kbd>⌘K</kbd><span data-i18n="sc.clear">清屏</span>
+        <kbd>⌘D / ⌘⇧D</kbd><span data-i18n="sc.split">垂直 / 水平分屏（复制连接）</span>
+        <kbd>⌘L</kbd><span data-i18n="sc.forwards">端口转发管理</span>
+        <kbd>⌘⇧F</kbd><span data-i18n="sc.sftp">SFTP 文件浏览</span>
+        <kbd>⌘⇧K</kbd><span data-i18n="sc.snippets">快捷命令面板</span>
+        <kbd>⌘±/⌘0</kbd><span data-i18n="sc.font">字号放大 / 缩小 / 重置</span>
+        <kbd>⌘1-9</kbd><span data-i18n="sc.switchTab">切换标签</span>
+        <kbd>rz</kbd><span data-i18n="sc.rz">终端内输入：上传文件（ZMODEM）</span>
+      </div>
+      <h2 data-i18n="settings.prefs">偏好</h2>
+      <div class="pref-list">
+        <label class="pref-row">
+          <span class="pref-name" data-i18n="pref.copySelect.name">选中即复制</span>
+          <span class="pref-desc" data-i18n="pref.copySelect.desc">在终端里选中文本时自动复制到剪贴板</span>
+          <input type="checkbox" id="set-copy-select">
+        </label>
+        <label class="pref-row">
+          <span class="pref-name" data-i18n="pref.bell.name">终端响铃提醒</span>
+          <span class="pref-desc" data-i18n="pref.bell.desc">远端发出 BEL 时显示提醒</span>
+          <input type="checkbox" id="set-bell">
+        </label>
+        <div class="pref-row">
+          <span class="pref-name" data-i18n="pref.theme.name">外观</span>
+          <span class="pref-desc" data-i18n="pref.theme.desc">界面与默认终端配色（会话可在高级选项单独覆盖）</span>
+          <select id="set-theme">
+            <option value="auto" data-i18n="theme.auto">跟随系统</option>
+            <option value="dark" data-i18n="theme.dark">深色</option>
+            <option value="light" data-i18n="theme.light">浅色</option>
+          </select>
+        </div>
+        <div class="pref-row">
+          <span class="pref-name" data-i18n="pref.lang.name">语言 / Language</span>
+          <span class="pref-desc" data-i18n="pref.lang.desc">界面与菜单语言，切换立即生效</span>
+          <select id="set-lang">
+            <option value="zh-CN">简体中文</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div class="pref-row">
+          <span class="pref-name" data-i18n="pref.restore.name">启动恢复</span>
+          <span class="pref-desc" data-i18n="pref.restore.desc">下次启动时如何处理本次打开的标签（退出时也会询问）</span>
+          <select id="set-restore-mode">
+            <option value="auto" data-i18n="pref.restore.auto">恢复并自动连接</option>
+            <option value="manual" data-i18n="pref.restore.manual">仅恢复（手动连接）</option>
+            <option value="off" data-i18n="pref.restore.off">不恢复</option>
+          </select>
+        </div>
+        <div class="pref-row">
+          <span class="pref-name" data-i18n="pref.mcp.name">AI Agent 接入（MCP）</span>
+          <span class="pref-desc" data-i18n="pref.mcp.desc">让本地 AI 工具（Claude Code / Cursor 等）在「已保存凭据、免交互登录」的主机上执行命令；默认关闭，全程审计</span>
+          <div class="pref-mcp-ctrl">
+            <span id="mcp-state" class="mcp-state" data-i18n="mcp.off">未开启</span>
+            <button id="mcp-toggle" class="btn-ghost" data-i18n="mcp.enable">开启</button>
+          </div>
+        </div>
+        <div id="mcp-extra" style="display:none">
+          <div class="pref-row">
+            <span class="pref-name" data-i18n="mcp.info.name">接入信息</span>
+            <span class="pref-desc mcp-info">
+              <span class="mcp-line"><span data-i18n="mcp.info.url">地址</span><code id="mcp-url"></code><button id="mcp-copy-url" class="mini-btn" type="button" data-i18n="common.copy">复制</button></span>
+              <span class="mcp-line"><span>Token</span><code id="mcp-token">••••••••</code><button id="mcp-show-token" class="mini-btn" type="button" data-i18n="mcp.info.show">显示</button><button id="mcp-copy-token" class="mini-btn" type="button" data-i18n="common.copy2">复制</button><button id="mcp-regen-token" class="mini-btn" type="button" data-i18n="mcp.info.regen">重置</button></span>
+            </span>
+          </div>
+          <div class="pref-row">
+            <span class="pref-name" data-i18n="mcp.approval.name">执行审批</span>
+            <span class="pref-desc" data-i18n="mcp.approval.desc">Agent 执行命令前弹窗确认（30 秒无响应自动拒绝）；改动即时生效</span>
+            <select id="mcp-mode">
+              <option value="auto" data-i18n="mcp.approval.auto">自动执行</option>
+              <option value="approve" data-i18n="mcp.approval.ask">每次询问</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions"><button id="help-close" class="btn-primary" data-i18n="settings.done">完成</button></div>
+    </div>
+  </div>
+
+  <!-- MCP 执行审批（Agent 请求在主机上执行命令） -->
+  <div id="mcp-approval-modal" class="modal-mask hidden">
+    <div class="modal">
+      <h2 data-i18n="mcp.ap.title">AI Agent 请求执行命令</h2>
+      <p id="mcp-ap-host" class="mcp-ap-host"></p>
+      <pre id="mcp-ap-cmd"></pre>
+      <p class="mcp-ap-note"><span id="mcp-ap-count">30</span><span data-i18n="mcp.ap.noteSuffix"> 秒内无响应将自动拒绝</span></p>
+      <div class="modal-actions">
+        <button id="mcp-ap-deny" class="btn-ghost" data-i18n="mcp.ap.deny">拒绝</button>
+        <button id="mcp-ap-approve" class="btn-primary" data-i18n="mcp.ap.approve">批准执行</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通用输入弹窗 -->
+  <div id="prompt-modal" class="modal-mask hidden">
+    <div class="modal">
+      <h2 id="pm-title" data-i18n="common.input">输入</h2>
+      <p id="pm-msg"></p>
+      <input id="pm-input" spellcheck="false">
+      <div class="modal-actions">
+        <button id="pm-cancel" class="btn-ghost" data-i18n="common.cancel">取消</button>
+        <button id="pm-ok" class="btn-primary" data-i18n="common.ok">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 确认弹窗 -->
+  <div id="confirm-modal" class="modal-mask hidden">
+    <div class="modal">
+      <h2 id="cf-title" data-i18n="common.confirm">确认</h2>
+      <p id="cf-msg"></p>
+      <div class="modal-actions">
+        <button id="cf-cancel" class="btn-ghost" data-i18n="common.cancel">取消</button>
+        <button id="cf-ok" class="btn-primary danger" data-i18n="common.ok2">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ctx-menu" class="hidden"></div>
+  <div id="toasts"></div>
+
+  <script src="../lib/i18n.js"></script>
+  <script src="../node_modules/xterm/lib/xterm.js"></script>
+  <script src="../node_modules/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
+  <script src="../node_modules/xterm-addon-search/lib/xterm-addon-search.js"></script>
+  <script src="../node_modules/xterm-addon-webgl/lib/xterm-addon-webgl.js"></script>
+  <script src="../node_modules/xterm-addon-web-links/lib/xterm-addon-web-links.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
