@@ -1,0 +1,26 @@
+CHANGELOG.md
+  h_ae18233ad2c5c5 3,5-7
+README.md
+  h_ae18233ad2c5c5 21,23
+README.zh-CN.md
+  h_ae18233ad2c5c5 20
+main.js
+  h_ae18233ad2c5c5 595
+renderer/app.js
+  h_ae18233ad2c5c5 247-250
+scripts/deploy-website.sh
+  h_ae18233ad2c5c5 1-31
+website/index.html
+  h_ae18233ad2c5c5 264,375,526-530
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "fbc3994acce749aece23b33bbd72fa13ee48017c",
+  "prompts": {},
+  "humans": {
+    "h_ae18233ad2c5c5": {
+      "author": "thislyc <42378143+thislyc@users.noreply.github.com>"
+    }
+  }
+}
