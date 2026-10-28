@@ -24,8 +24,13 @@ if git diff --cached --quiet; then
   echo "✓ 站点无变化"
 else
   git commit -m "site: sync from main website/ ($(date +%F))"
+  # 网络受限时可通过环境变量指定代理，如 HUBTERM_PROXY=http://127.0.0.1:7897
   if ! git push origin gh-pages 2>/dev/null; then
-    git -c http.proxy=http://127.0.0.1:7897 -c https.proxy=http://127.0.0.1:7897 push origin gh-pages
+    if [ -n "$HUBTERM_PROXY" ]; then
+      git -c http.proxy="$HUBTERM_PROXY" -c https.proxy="$HUBTERM_PROXY" push origin gh-pages
+    else
+      git push origin gh-pages
+    fi
   fi
   echo "✓ 已推送 gh-pages，GitHub Pages 将自动重新部署"
 fi
