@@ -1,0 +1,20 @@
+CHANGELOG.md
+  h_be13be0f7be62b 6
+README.md
+  h_be13be0f7be62b 164
+package.json
+  h_be13be0f7be62b 14-15
+scripts/release.sh
+  h_be13be0f7be62b 1-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "bcbeb93055aa708342149147ea4e8e38c8bc2a1e",
+  "prompts": {},
+  "humans": {
+    "h_be13be0f7be62b": {
+      "author": "thislyc <thislyc@qq.com>"
+    }
+  }
+}
