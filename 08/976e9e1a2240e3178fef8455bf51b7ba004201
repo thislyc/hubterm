@@ -1,0 +1,18 @@
+CONTRIBUTING.md
+  h_ae18233ad2c5c5 3-7,12-13,16-20,22-24,26-37,39-43,47,51-55,57
+README.md
+  h_ae18233ad2c5c5 115,148-149,164-165,169-173,175
+README.zh-CN.md
+  h_ae18233ad2c5c5 132-133,148-149,153-157,159
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "08976e9e1a2240e3178fef8455bf51b7ba004201",
+  "prompts": {},
+  "humans": {
+    "h_ae18233ad2c5c5": {
+      "author": "thislyc <42378143+thislyc@users.noreply.github.com>"
+    }
+  }
+}
