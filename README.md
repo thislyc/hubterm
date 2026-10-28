@@ -161,7 +161,7 @@ CI isolate everything via `HUBTERM_HOME=/tmp/xxx`.
 
 - [x] Windows / Intel-mac builds (`npm run package:win` / `package:intel`)
 - [x] MCP server for local AI agents (list hosts / exec, audit, approval dialog)
-- [x] CI builds & artifacts for macOS (arm64/x64) + Windows on every push; auto-release on `v*` tags
+- [x] One-command release: `npm run release` builds macOS (arm64/x64) + Windows locally and uploads to GitHub Releases (pushing a `v*` tag triggers it via local git hook)
 - [x] English / 中文 UI language switch (Settings → Language)
 - [ ] MCP: SFTP file tools (read/write/tail) + live agent-session terminal view
 - [ ] Full keyboard remapping

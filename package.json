@@ -1,7 +1,7 @@
 {
   "name": "hubterm",
   "productName": "HubTerm",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "description": "HubTerm — one-click SSH through any bastion host",
   "main": "main.js",
   "scripts": {
@@ -11,7 +11,8 @@
     "icon:win": "python3.13 scripts/make_ico.py",
     "package": "sh scripts/assemble.sh",
     "package:intel": "sh scripts/assemble.sh x64",
-    "package:win": "node scripts/assemble-win.js"
+    "package:win": "node scripts/assemble-win.js",
+    "release": "sh scripts/release.sh"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",

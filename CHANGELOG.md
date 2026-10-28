@@ -1,9 +1,9 @@
 # Changelog
 
-## Unreleased — 中英双语（i18n）+ MCP（AI Agent 接入）+ 跨平台（Intel macOS / Windows）
+## 2.8.0 (2026-10-28) — 中英双语（i18n）+ MCP（AI Agent 接入）+ 跨平台 + 发布管线
 
 - **中英双语全量支持**：新增 `lib/i18n.js`（UMD 字典，主进程/渲染层共用，`zh-CN` / `en` 双语 450+ 条）。应用内：设置 → 偏好 → 「语言 / Language」下拉即时切换，界面、菜单、对话框、错误与状态提示、MCP 工具描述全部随语言切换；选择持久化（渲染层 localStorage + 主进程 settings.json），默认跟随系统语言；主进程收到切换后即时重建应用菜单。README 拆分为 `README.md`（英文）+ `README.zh-CN.md`（中文），顶部互链切换；官网落地页 `website/index.html` 内置 中/EN 切换按钮（导航栏右侧），支持 `?lang=` 参数与 localStorage 记忆，默认跟随浏览器语言；标题、meta 描述、终端演示动画同步翻译。
-- **CI 自动编译**：GitHub Actions 每次 push 构建三平台产物（macOS arm64/x64 + Windows x64，Actions 页可下载）；推 `v*` tag 自动创建 GitHub Release 并附全部产物。仓库身份统一为 `thislyc <thislyc@qq.com>`。
+- **发布管线去 Actions 化**：`scripts/release.sh`（`npm run release`）本地构建 macOS arm64/x64 + Windows x64 并直传 GitHub Releases（直连失败自动回退 Clash 代理）；本机 pre-push 钩子使「推 v* tag」即自动构建上传。GitHub Actions workflow（ci.yml）保留但手动停用（账户付款授权失败导致计量服务被暂停，公开仓库或解冻账户后可重新启用）。仓库身份统一为 `thislyc <thislyc@qq.com>`。
 - **主界面截图**：演示数据自摄（`--screenshot` + `--eval` 钩子连本地演示 SSH 服务器：虚构主机名 + TEST-NET 文档 IP），不携带任何真实内网/账号信息。
 - **官网落地页**：`website/index.html` 单文件纯静态页（无依赖、深色主题对齐应用外观），含特性总览、堡垒机自动化说明、MCP 安全模型、横向对比表与构建指引；发布渠道待定（GitHub Pages / Vercel 均可直接部署）。
 - **仓库**：GitHub 仓库 `thislyc/hubterm`（先私有），`package.json` repository 字段同步更新；README 全面重写（能力总览表、登录规则示例、MCP 接入配置、横向对比、FAQ 式说明）。
