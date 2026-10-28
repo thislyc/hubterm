@@ -1,0 +1,14 @@
+website/index.html
+  h_be13be0f7be62b 109-111,263-264,367,371,375,403-404,441,443,458-459,496,498
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "f78b0d64cc9d1054968ba579bc3da673c8c1be4a",
+  "prompts": {},
+  "humans": {
+    "h_be13be0f7be62b": {
+      "author": "thislyc <thislyc@qq.com>"
+    }
+  }
+}
