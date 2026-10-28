@@ -14,6 +14,7 @@ const { SshSession } = require('./lib/connect');
 const { HubTermMcpServer, loadMcpConfig, saveMcpConfig } = require('./lib/mcp');
 const i18n = require('./lib/i18n');
 const t = i18n.t;
+const updater = require('./lib/updater');
 
 const LOGS_DIR = path.join(DATA_DIR, 'logs');
 const SETTINGS = path.join(DATA_DIR, 'settings.json');
@@ -415,6 +416,7 @@ function buildMenu() {
       label: 'HubTerm',
       submenu: [
         { label: t('menu.about'), click: () => app.showAboutPanel() },
+        { label: t('menu.checkUpdates'), click: () => doCheckUpdate(true) },
         { type: 'separator' },
         { role: 'quit', label: t('menu.quit') },
       ],
@@ -493,6 +495,34 @@ function buildMenu() {
     },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+/* ---------- 更新检查：只提示不静默替换（macOS 自更新需正式签名，未签名阶段引导到 Releases） ---------- */
+let updateChecking = false;
+async function doCheckUpdate(interactive) {
+  if (updateChecking) return;
+  updateChecking = true;
+  send('updater:checking', {});
+  const info = await updater.checkForUpdates({ currentVersion: app.getVersion() });
+  updateChecking = false;
+  send('updater:status', { status: info.status, latest: info.latest, url: info.url });
+  if (info.status === 'available') {
+    const { response } = await dialog.showMessageBox(win, {
+      type: 'info',
+      message: t('upd.available', info.latest),
+      detail: (info.notes || '').slice(0, 800) || t('upd.noNotes'),
+      buttons: [t('upd.goDownload'), t('upd.later')],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (response === 0) shell.openExternal(info.url);
+  } else if (interactive) {
+    if (info.status === 'up-to-date') {
+      dialog.showMessageBox(win, { type: 'info', message: t('upd.upToDate', info.currentVersion) });
+    } else {
+      dialog.showMessageBox(win, { type: 'error', message: t('upd.checkFailed'), detail: info.error });
+    }
+  }
 }
 
 function reloadSessions() {
@@ -972,6 +1002,8 @@ if (!gotLock) {
       }, 3500);
       return;
     }
+    // 启动后静默检查一次更新（仅发现新版本时弹提示；出错不打扰，自测路径已被上方 return 跳过）
+    setTimeout(() => doCheckUpdate(false), 8000);
     // 自测钩子：--selftest-edit 直接调 renderer 的 showEdit，抓取编辑弹窗运行时错误
     if (process.argv.includes('--selftest-edit')) {
       setTimeout(() => {

@@ -167,7 +167,7 @@ CI isolate everything via `HUBTERM_HOME=/tmp/xxx`.
 - [x] English / 中文 UI language switch (Settings → Language)
 - [ ] MCP: SFTP file tools (read/write/tail) + live agent-session terminal view
 - [ ] Full keyboard remapping
-- [ ] Auto-update channel
+- [x] Update checker: in-app check with release notes and a download shortcut (silent self-update needs code signing — planned)
 - [ ] Mosh, Telnet, Serial protocols
 - [ ] Team sync (self-hosted, commercial edition)
 

@@ -150,7 +150,7 @@ npm run package:win    # Windows x64 绿色目录 + zip（macOS/Linux 上也能�
 - [x] 界面中英文切换（设置 → 语言）
 - [ ] MCP：SFTP 文件工具（读/写/tail）+ Agent 会话终端投屏
 - [ ] 完整键盘重映射
-- [ ] 自动更新通道
+- [x] 更新检查：应用内检查新版本，附更新日志与下载入口（静默自更新需正式签名，规划中）
 - [ ] Mosh、Telnet、Serial 协议
 - [ ] 团队同步（可自托管，商业版）
 

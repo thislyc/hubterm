@@ -6,7 +6,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node test/automaton.test.js && node test/sessions.test.js && node test/store.test.js && node test/sshconfig.test.js && node test/zmodem.test.js && node test/mcp.test.js && node test/ui-audit.test.js",
+    "test": "node test/automaton.test.js && node test/sessions.test.js && node test/store.test.js && node test/sshconfig.test.js && node test/zmodem.test.js && node test/updater.test.js && node test/mcp.test.js && node test/ui-audit.test.js",
     "icon": "python3 assets/make_icon.py",
     "icon:win": "python3.13 scripts/make_ico.py",
     "package": "sh scripts/assemble.sh",
