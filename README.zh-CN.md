@@ -129,7 +129,8 @@ npm run package:win    # Windows x64 绿色目录 + zip（macOS/Linux 上也能�
 └── logs/              # 每会话日志（可选）
 ```
 
-密码在可用时经系统钥匙串加密存储。测试与 CI 通过 `HUBTERM_HOME=/tmp/xxx` 隔离。
+密码在可用时经系统钥匙串加密存储。测试套件完全离线运行，通过
+`HUBTERM_HOME=/tmp/xxx` 隔离全部数据。
 
 ## 横向对比
 
@@ -144,13 +145,19 @@ npm run package:win    # Windows x64 绿色目录 + zip（macOS/Linux 上也能�
 
 ## 路线图
 
+已完成：
+
 - [x] Windows / Intel Mac 构建（`npm run package:win` / `package:intel`）
 - [x] 本地 AI Agent 的 MCP server（列主机 / 执行、审计、审批弹窗）
-- [x] 一键发版：`npm run release` 本地构建 macOS（arm64/x64）+ Windows 并直传 GitHub Releases（推 `v*` tag 经本机钩子自动触发）
 - [x] 界面中英文切换（设置 → 语言）
+- [x] 更新检查：应用内检查新版本，附更新日志与下载入口
+- [x] 一键发版：`npm run release` 本地构建 macOS（arm64/x64）+ Windows 并直传 GitHub Releases
+
+接下来：
+
 - [ ] MCP：SFTP 文件工具（读/写/tail）+ Agent 会话终端投屏
+- [ ] 静默自更新（macOS 需正式签名）
 - [ ] 完整键盘重映射
-- [x] 更新检查：应用内检查新版本，附更新日志与下载入口（静默自更新需正式签名，规划中）
 - [ ] Mosh、Telnet、Serial 协议
 - [ ] 团队同步（可自托管，商业版）
 

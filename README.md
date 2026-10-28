@@ -112,7 +112,7 @@ Grab a prebuilt package from [Releases](https://github.com/thislyc/hubterm/relea
 (macOS arm64/x64, Windows x64), or build from source (Node ≥ 20):
 
 ```bash
-npm install            # uses npmmirror automatically if GitHub is blocked
+npm install            # lockfile resolves against the npmmirror registry (global CDN)
 npm test               # 80+ offline tests (mock SSH server + real lrzsz + MCP)
 npm run package        # macOS app → /Applications (follows host arch)
 npm run package:intel  # macOS x64 build for Intel Macs
@@ -145,8 +145,8 @@ Everything lives in `~/.hubterm/` — plain JSON, no cloud, no telemetry:
 └── logs/              # per-session logs (optional)
 ```
 
-Passwords are encrypted at rest with the OS Keychain when available. Tests and
-CI isolate everything via `HUBTERM_HOME=/tmp/xxx`.
+Passwords are encrypted at rest with the OS Keychain when available. The test
+suite runs fully offline and isolates all data via `HUBTERM_HOME=/tmp/xxx`.
 
 ## How it compares
 
@@ -161,13 +161,19 @@ CI isolate everything via `HUBTERM_HOME=/tmp/xxx`.
 
 ## Roadmap
 
+Done:
+
 - [x] Windows / Intel-mac builds (`npm run package:win` / `package:intel`)
 - [x] MCP server for local AI agents (list hosts / exec, audit, approval dialog)
-- [x] One-command release: `npm run release` builds macOS (arm64/x64) + Windows locally and uploads to GitHub Releases (pushing a `v*` tag triggers it via local git hook)
 - [x] English / 中文 UI language switch (Settings → Language)
+- [x] Update checker: in-app check with release notes and a download shortcut
+- [x] One-command release: `npm run release` builds macOS (arm64/x64) + Windows and uploads to GitHub Releases
+
+Next:
+
 - [ ] MCP: SFTP file tools (read/write/tail) + live agent-session terminal view
+- [ ] Silent self-update (requires code signing on macOS)
 - [ ] Full keyboard remapping
-- [x] Update checker: in-app check with release notes and a download shortcut (silent self-update needs code signing — planned)
 - [ ] Mosh, Telnet, Serial protocols
 - [ ] Team sync (self-hosted, commercial edition)
 
