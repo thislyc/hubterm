@@ -1,0 +1,16 @@
+README.md
+  h_be13be0f7be62b 17-18,21
+README.zh-CN.md
+  h_be13be0f7be62b 16-17,20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "6f092a71ea7dbc7fc0a27b64e6c3e33de231dbde",
+  "prompts": {},
+  "humans": {
+    "h_be13be0f7be62b": {
+      "author": "thislyc <thislyc@qq.com>"
+    }
+  }
+}
