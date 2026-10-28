@@ -1,0 +1,28 @@
+CHANGELOG.md
+  h_be13be0f7be62b 3-7
+README.md
+  h_be13be0f7be62b 170
+README.zh-CN.md
+  h_be13be0f7be62b 153
+lib/i18n.js
+  h_be13be0f7be62b 236-238,477-479
+lib/updater.js
+  h_be13be0f7be62b 1-53
+main.js
+  h_be13be0f7be62b 17,419,500-527,1005-1006
+package.json
+  h_be13be0f7be62b 9
+test/updater.test.js
+  h_be13be0f7be62b 1-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "f98ad65a9488efaf5e6a2ed1fd339fe03e5dc16a",
+  "prompts": {},
+  "humans": {
+    "h_be13be0f7be62b": {
+      "author": "thislyc <thislyc@qq.com>"
+    }
+  }
+}
