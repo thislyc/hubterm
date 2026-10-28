@@ -1,8 +1,9 @@
 #!/bin/sh
 # 本地构建三平台并上传 GitHub Release（不依赖 GitHub Actions）
-# 用法: sh scripts/release.sh [tag]      # tag 缺省 = v<package.json version>
-# 流程: 构建 macOS arm64/x64 + Windows x64 → 推 main 与 tag → 创建 Release → 上传产物
-# 依赖: npm 依赖已装好；网络走直连，失败自动回退 Clash 代理 (127.0.0.1:7897)
+# 用法: sh scripts/release.sh [tag]          # tag 缺省 = v<package.json version>
+#       SKIP_BUILD=1 sh scripts/release.sh   # 跳过构建，直接上传 dist-release/ 里现成的产物
+# 流程: 推 main 与 tag（快速失败暴露网络问题）→ 构建三平台 → 创建 Release → 上传产物
+# 依赖: npm 依赖已装好；网络直连失败自动回退 Clash 代理 (127.0.0.1:7897)
 set -e
 cd "$(dirname "$0")/.."
 export HUBTERM_RELEASE=1   # 让本机 pre-push 钩子放行内部的 git push，避免递归
@@ -10,33 +11,44 @@ export HUBTERM_RELEASE=1   # 让本机 pre-push 钩子放行内部的 git push�
 VERSION=$(node -p "require('./package.json').version")
 TAG="${1:-v$VERSION}"
 OUT=dist-release
-PROXY_ARGS=()
-try_curl() {
-  # try_curl <curl 参数...>：先直连，失败走代理再试一次
-  curl -sS -f "$@" || curl -sS -f -x http://127.0.0.1:7897 "$@"
+
+git_push() {
+  # git_push <参数...>：直连与代理各试 3 次
+  i=0
+  until git push "$@" 2>/dev/null; do
+    i=$((i + 1))
+    [ $i -ge 3 ] && { echo "    直连失败，走代理重试"; until git -c http.proxy=http://127.0.0.1:7897 -c https.proxy=http://127.0.0.1:7897 push "$@" 2>/dev/null; do i=$((i + 1)); [ $i -ge 8 ] && return 1; sleep 5; done; return 0; }
+    sleep 3
+  done
 }
 
-echo "==> [1/5] 构建 macOS arm64"
-rm -rf "$OUT"; mkdir -p "$OUT"
-HUBTERM_DEST="$PWD/$OUT/HubTerm.app" sh scripts/assemble.sh
-ditto -c -k --keepParent "$OUT/HubTerm.app" "$OUT/HubTerm-macOS-arm64.zip"
-
-echo "==> [2/5] 构建 macOS x64"
-HUBTERM_DEST="$PWD/$OUT/HubTerm-x64.app" sh scripts/assemble.sh x64
-ditto -c -k --keepParent "$OUT/HubTerm-x64.app" "$OUT/HubTerm-macOS-x64.zip"
-
-echo "==> [3/5] 构建 Windows x64"
-node scripts/assemble-win.js
-mv dist/HubTerm-*-win-x64.zip "$OUT/"
-ls -lh "$OUT"
-
-echo "==> [4/5] 推送 main 与 $TAG"
-git push origin main || git -c http.proxy=http://127.0.0.1:7897 -c https.proxy=http://127.0.0.1:7897 push origin main
+echo "==> [1/5] 推送 main 与 $TAG"
+git_push main
 git rev-parse -q --verify "refs/tags/$TAG" >/dev/null || git tag "$TAG"
-git push origin "refs/tags/$TAG" || git -c http.proxy=http://127.0.0.1:7897 -c https.proxy=http://127.0.0.1:7897 push origin "refs/tags/$TAG"
+git_push "refs/tags/$TAG"
+
+if [ "${SKIP_BUILD:-}" != "1" ]; then
+  echo "==> [2/5] 构建 macOS arm64"
+  rm -rf "$OUT"; mkdir -p "$OUT"
+  HUBTERM_DEST="$PWD/$OUT/HubTerm.app" sh scripts/assemble.sh
+  ditto -c -k --keepParent "$OUT/HubTerm.app" "$OUT/HubTerm-macOS-arm64.zip"
+
+  echo "==> [3/5] 构建 macOS x64"
+  HUBTERM_DEST="$PWD/$OUT/HubTerm-x64.app" sh scripts/assemble.sh x64
+  ditto -c -k --keepParent "$OUT/HubTerm-x64.app" "$OUT/HubTerm-macOS-x64.zip"
+
+  echo "==> [4/5] 构建 Windows x64"
+  node scripts/assemble-win.js
+  mv dist/HubTerm-*-win-x64.zip "$OUT/"
+fi
+ls -lh "$OUT"
 
 echo "==> [5/5] 创建 Release 并上传产物"
 TOKEN=$(printf "protocol=https\nhost=github.com\n" | git credential fill | awk -F= '/^password=/{print $2}')
+try_curl() {
+  # try_curl <curl 参数...>：直连失败走代理，各试 2 次
+  curl -sS -f "$@" || curl -sS -f -x http://127.0.0.1:7897 "$@" || curl -sS -f "$@" || curl -sS -f -x http://127.0.0.1:7897 "$@"
+}
 RELEASE_JSON=$(try_curl -X POST -H "Authorization: token $TOKEN" -H "Accept: application/vnd.github+json" \
   https://api.github.com/repos/thislyc/hubterm/releases \
   -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"generate_release_notes\":true}")
