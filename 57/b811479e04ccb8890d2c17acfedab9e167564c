@@ -1,0 +1,23 @@
+scripts/release.sh
+  h_be13be0f7be62b 1-7,9-53
+  h_be13be0f7be62b 8
+README.md
+  h_be13be0f7be62b 164
+CHANGELOG.md
+  h_be13be0f7be62b 6
+  h_be13be0f7be62b 3
+package.json
+  h_be13be0f7be62b 14-15
+  h_be13be0f7be62b 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "57b811479e04ccb8890d2c17acfedab9e167564c",
+  "prompts": {},
+  "humans": {
+    "h_be13be0f7be62b": {
+      "author": "thislyc <thislyc@qq.com>"
+    }
+  }
+}
