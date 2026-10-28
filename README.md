@@ -18,9 +18,9 @@ can safely run commands on your hosts.
 [![Downloads](https://img.shields.io/github/downloads/thislyc/hubterm/total)](https://github.com/thislyc/hubterm/releases/latest)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-[![Website](https://img.shields.io/badge/docs-website-89b4fa)](website/index.html)
+[![Website](https://img.shields.io/badge/docs-website-89b4fa)](https://thislyc.github.io/hubterm/)
 
-<img src="assets/screenshot-main.png" width="800" alt="HubTerm main window" />
+<img src="assets/screenshot-main-en.png" width="800" alt="HubTerm main window" />
 
 </div>
 

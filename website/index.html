@@ -261,7 +261,7 @@
   </div>
 
   <div class="hero-shot">
-    <img src="assets/screenshot-main.png" data-i18n-alt="shot.alt" alt="HubTerm 主界面：会话树、多标签终端、SFTP" />
+    <img id="img-main" src="assets/screenshot-main.png" data-i18n-alt="shot.alt" alt="HubTerm 主界面：会话树、多标签终端、SFTP" />
   </div>
 </header>
 
@@ -372,7 +372,7 @@ Post:   <span class="s">sudo -i</span>
 <span class="k">npm</span> run package       <span class="c" data-i18n="build.c3"># 或 package:intel / package:win</span></pre>
 
   <div class="shot reveal">
-    <img src="assets/screenshot-welcome.png" data-i18n-alt="welcome.alt" alt="HubTerm 首次启动：欢迎页与空会话树" loading="lazy" />
+    <img id="img-welcome" src="assets/screenshot-welcome.png" data-i18n-alt="welcome.alt" alt="HubTerm 首次启动：欢迎页与空会话树" loading="lazy" />
   </div>
 </section>
 
@@ -523,6 +523,11 @@ Post:   <span class="s">sudo -i</span>
     if (en) en.style.display = (lang === 'en') ? 'none' : '';
     var btn = document.getElementById('lang-toggle');
     if (btn) btn.textContent = (lang === 'en') ? '中文' : 'EN';
+    // 截图随语言切换：英文页配英文界面截图，中文页配中文界面截图
+    var mainImg = document.getElementById('img-main');
+    if (mainImg) mainImg.src = 'assets/screenshot-main' + (lang === 'en' ? '-en' : '') + '.png';
+    var welImg = document.getElementById('img-welcome');
+    if (welImg) welImg.src = 'assets/screenshot-welcome' + (lang === 'en' ? '-en' : '') + '.png';
     // foot.copyright 里带 <span id="year">，innerHTML 重建后重新填年份
     var y = document.getElementById('year');
     if (y) y.textContent = new Date().getFullYear();

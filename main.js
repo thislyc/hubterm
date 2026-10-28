@@ -592,6 +592,7 @@ ipcMain.handle('sessions:list', () => publicSessions(sessions));
 ipcMain.handle('restore:info', () => ({
   mode: settings.restoreMode || 'manual',
   keys: Array.isArray(settings.openTabs) ? settings.openTabs : [],
+  lang: i18n.getLang(), // 渲染层无本地语言记忆时采用主进程保存的选择
 }));
 ipcMain.on('restore:saveTabs', (e, keys) => {
   settings.openTabs = Array.isArray(keys) ? keys.slice(0, 12) : [];

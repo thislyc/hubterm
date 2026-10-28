@@ -1,7 +1,10 @@
 # Changelog
 
-## Unreleased — 更新检查
+## Unreleased — 更新检查 + 官网上线
 
+- **官网上线**：https://thislyc.github.io/hubterm/ （GitHub Pages，gh-pages 分支，`scripts/deploy-website.sh` 一键同步）。README 徽章与官网入口指向线上地址。
+- **截图随语言切换**：英文页配英文界面截图、中文页配中文界面截图（官网与 README 同步产出两套截图；顺带修复一个真 bug——渲染层此前不读 settings.json 保存的语言偏好，重装/换机后会丢）。
+- **移除 GitHub Actions**：自动化构建下线（账户计费冻结 + 发版已走本地 `npm run release` 管线），删除 ci.yml；账单问题解决后可随时恢复。
 - **更新检查**：HubTerm 菜单新增「检查更新…」，启动后也会静默检查一次（仅发现新版本时弹窗：附更新日志与「前往下载」直达 Releases；出错不打扰）。采用「检测 + 引导下载」而非静默自替换——macOS 的 Squirrel 自更新强制要求正式签名（当前 ad-hoc 签名），签名落地后再评估静默通道。测试：`test/updater.test.js` 12 项（版本比较 / 新版本·最新·出错三种结局 / 坏响应归一），共 90+ 断言。
 - **官网**：Hero 手绘终端 mockup 换为真实主界面截图——原 mockup 的「« 自动应答 »」标注与手敲 ssh 入口在产品中并不存在（规则静默应答、连接走会话树），易误导访客；构建区改为首次启动欢迎页截图；Hero 主按钮直指 Releases 下载。
 

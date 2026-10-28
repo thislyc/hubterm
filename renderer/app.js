@@ -244,6 +244,10 @@ async function init() {
   // 启动恢复：auto=恢复并连接；manual=恢复为未连接标签（点击再连）；off=不恢复
   try {
     const info = await window.hub.restoreInfo();
+    // 语言偏好以主进程 settings.json 为准（UI 里切换时两边同步写入，正常情况下本就一致）
+    if (info.lang && info.lang !== i18n.getLang()) {
+      setLanguage(info.lang);
+    }
     if (info.mode !== 'off') {
       for (const key of info.keys || []) {
         const s = sessions.find((x) => x.key === key);
