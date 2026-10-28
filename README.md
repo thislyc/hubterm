@@ -107,11 +107,12 @@ known_hosts fingerprint change ⇒ exec refused outright.
 
 ## Build & install
 
-No prebuilt binaries yet — build from source (Node ≥ 20):
+Grab a prebuilt package from [Releases](https://github.com/thislyc/hubterm/releases/latest)
+(macOS arm64/x64, Windows x64), or build from source (Node ≥ 20):
 
 ```bash
 npm install            # uses npmmirror automatically if GitHub is blocked
-npm test               # 90+ offline tests (mock SSH server + real lrzsz + MCP)
+npm test               # 80+ offline tests (mock SSH server + real lrzsz + MCP)
 npm run package        # macOS app → /Applications (follows host arch)
 npm run package:intel  # macOS x64 build for Intel Macs
 npm run package:win    # Windows x64 green folder + zip (builds on macOS/Linux too)
@@ -172,7 +173,7 @@ CI isolate everything via `HUBTERM_HOME=/tmp/xxx`.
 ## Contributing
 
 PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Run `npm test` before
-submitting; 90+ offline tests cover the login automation engine, ZMODEM, MCP
+submitting; 80+ offline tests cover the login automation engine, ZMODEM, MCP
 and the storage layer against a mock SSH server.
 
 ## Commercial

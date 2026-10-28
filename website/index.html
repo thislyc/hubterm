@@ -271,9 +271,10 @@
     <p class="sub" data-i18n="hero.sub">菜单式堡垒机自动应答、ZMODEM / SFTP、端口转发、AI Agent 安全接入——所有自动化都是你可见、可编辑的登录规则，没有黑盒。</p>
     <p class="en" id="hero-en">One-click SSH through any bastion host. A modern, open-source SecureCRT alternative.</p>
     <div class="cta-row">
-      <a class="btn btn-primary" href="https://github.com/thislyc/hubterm" target="_blank" rel="noopener" data-i18n="hero.ctaGithub">GitHub 仓库</a>
+      <a class="btn btn-primary" href="https://github.com/thislyc/hubterm/releases/latest" target="_blank" rel="noopener" data-i18n="hero.ctaDownload">下载 v2.8.0</a>
+      <a class="btn btn-ghost" href="https://github.com/thislyc/hubterm" target="_blank" rel="noopener" data-i18n="hero.ctaGithub">GitHub 仓库</a>
       <a class="btn btn-ghost" href="#build" data-i18n="hero.ctaBuild">从源码构建</a>
-      <span class="cta-note" data-i18n-html="hero.ctaNote">暂未提供预编译下载，先 clone 下来 <code>npm run package</code> 一下就好。</span>
+      <span class="cta-note" data-i18n-html="hero.ctaNote">macOS / Windows 安装包已在 GitHub Releases 提供，免费无需注册；Windows 包未签名，首跑弹 SmartScreen 时选「更多信息 → 仍要运行」。</span>
     </div>
   </div>
 
@@ -432,8 +433,8 @@ Post:   <span class="s">sudo -i</span>
       'hero.eyebrow': '开源免费 · macOS / Windows',
       'hero.h1': '穿透任意堡垒机，<br /><span class="grad">一键直达</span>',
       'hero.sub': '菜单式堡垒机自动应答、ZMODEM / SFTP、端口转发、AI Agent 安全接入——所有自动化都是你可见、可编辑的登录规则，没有黑盒。',
-      'hero.ctaGithub': 'GitHub 仓库', 'hero.ctaBuild': '从源码构建',
-      'hero.ctaNote': '暂未提供预编译下载，先 clone 下来 <code>npm run package</code> 一下就好。',
+      'hero.ctaDownload': '下载 v2.8.0', 'hero.ctaGithub': 'GitHub 仓库', 'hero.ctaBuild': '从源码构建',
+      'hero.ctaNote': 'macOS / Windows 安装包已在 GitHub Releases 提供，免费无需注册；Windows 包未签名，首跑弹 SmartScreen 时选「更多信息 → 仍要运行」。',
       'term.title': '生产库-01 — HubTerm',
       'term.body': '<span class="c-comment"># 连接菜单式堡垒机会话（已配好登录规则）</span>\n<span class="c-prompt">➜</span> <span class="c-cmd">ssh yunwei@bastion.corp.cn</span>\n\n<span class="c-dim">Welcome to Bastion 2.0 — 集团运维入口</span>\n<span class="c-blue">1)</span> web-nginx-01        <span class="c-blue">2)</span> db-mysql-03\n<span class="c-blue">3)</span> cache-redis-02      <span class="c-blue">4)</span> kafka-04\nOpt&gt; <span class="c-dim">« 自动应答：3 »</span>\n\n<span class="c-dim">请选择登录用户:</span> root / yunwei / deploy\nlogin: <span class="c-dim">« 自动应答：$TARGET »</span>\nPassword: <span class="c-dim">« 自动应答：$PASSWORD »</span>\n\n<span class="c-yellow">[MFA]</span> 请输入动态验证码: <span class="cursor"></span>\n<span class="c-comment"># 检测到 MFA → 弹窗等你输码，规则绝不猜</span>',
       'features.h2': '一个终端客户端，接住运维的全部日常',
@@ -487,8 +488,8 @@ Post:   <span class="s">sudo -i</span>
       'hero.eyebrow': 'Free & open source · macOS / Windows',
       'hero.h1': 'Through any bastion host,<br /><span class="grad">one click away</span>',
       'hero.sub': 'Menu-bastion auto-answer, ZMODEM / SFTP, port forwarding, safe AI-agent access — every automation is a login rule you can read and edit. No black boxes.',
-      'hero.ctaGithub': 'GitHub Repository', 'hero.ctaBuild': 'Build from source',
-      'hero.ctaNote': 'No prebuilt downloads yet — just clone and <code>npm run package</code>.',
+      'hero.ctaDownload': 'Download v2.8.0', 'hero.ctaGithub': 'GitHub Repository', 'hero.ctaBuild': 'Build from source',
+      'hero.ctaNote': 'Prebuilt packages for macOS / Windows are on GitHub Releases — free, no signup. Windows builds are unsigned: SmartScreen → More info → Run anyway.',
       'term.title': 'prod-db-01 — HubTerm',
       'term.body': '<span class="c-comment"># Open a menu-bastion session (login rules already configured)</span>\n<span class="c-prompt">➜</span> <span class="c-cmd">ssh ops@bastion.corp.cn</span>\n\n<span class="c-dim">Welcome to Bastion 2.0 — Group Ops Gateway</span>\n<span class="c-blue">1)</span> web-nginx-01        <span class="c-blue">2)</span> db-mysql-03\n<span class="c-blue">3)</span> cache-redis-02      <span class="c-blue">4)</span> kafka-04\nOpt&gt; <span class="c-dim">« auto-answer: 3 »</span>\n\n<span class="c-dim">Select login user:</span> root / ops / deploy\nlogin: <span class="c-dim">« auto-answer: $TARGET »</span>\nPassword: <span class="c-dim">« auto-answer: $PASSWORD »</span>\n\n<span class="c-yellow">[MFA]</span> Enter one-time code: <span class="cursor"></span>\n<span class="c-comment"># MFA detected → a dialog waits for YOU; rules never guess</span>',
       'features.h2': 'One terminal for the whole ops day',

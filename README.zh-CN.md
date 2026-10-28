@@ -95,11 +95,12 @@ known_hosts 指纹变更 ⇒ 直接拒绝执行。设计文档见 [docs/mcp-desi
 
 ## 构建与安装
 
-暂无预编译产物——从源码构建（Node ≥ 20）：
+预编译包见 [Releases](https://github.com/thislyc/hubterm/releases/latest)
+（macOS arm64/x64、Windows x64），或从源码构建（Node ≥ 20）：
 
 ```bash
 npm install            # GitHub 被墙时自动走 npmmirror
-npm test               # 90+ 离线测试（mock SSH 服务器 + 真实 lrzsz + MCP）
+npm test               # 80+ 离线测试（mock SSH 服务器 + 真实 lrzsz + MCP）
 npm run package        # macOS 应用 → /Applications（跟随本机架构）
 npm run package:intel  # Intel Mac 的 x64 构建
 npm run package:win    # Windows x64 绿色目录 + zip（macOS/Linux 上也能交叉构建）
@@ -144,7 +145,7 @@ npm run package:win    # Windows x64 绿色目录 + zip（macOS/Linux 上也能�
 
 - [x] Windows / Intel Mac 构建（`npm run package:win` / `package:intel`）
 - [x] 本地 AI Agent 的 MCP server（列主机 / 执行、审计、审批弹窗）
-- [x] CI：每次 push 构建 macOS（arm64/x64）+ Windows 产物；`v*` tag 自动发 Release
+- [x] 一键发版：`npm run release` 本地构建 macOS（arm64/x64）+ Windows 并直传 GitHub Releases（推 `v*` tag 经本机钩子自动触发）
 - [x] 界面中英文切换（设置 → 语言）
 - [ ] MCP：SFTP 文件工具（读/写/tail）+ Agent 会话终端投屏
 - [ ] 完整键盘重映射
@@ -155,7 +156,7 @@ npm run package:win    # Windows x64 绿色目录 + zip（macOS/Linux 上也能�
 ## 参与贡献
 
 欢迎 PR——见 [CONTRIBUTING.md](CONTRIBUTING.md)。提交前请跑 `npm test`；
-90+ 离线测试覆盖登录自动化引擎、ZMODEM、MCP 与存储层（对着 mock SSH 服务器）。
+80+ 离线测试覆盖登录自动化引擎、ZMODEM、MCP 与存储层（对着 mock SSH 服务器）。
 
 ## 商业化
 
