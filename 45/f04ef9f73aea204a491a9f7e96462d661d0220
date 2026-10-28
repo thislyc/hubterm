@@ -1,0 +1,14 @@
+index.html
+  h_ae18233ad2c5c5 1-555
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "45f04ef9f73aea204a491a9f7e96462d661d0220",
+  "prompts": {},
+  "humans": {
+    "h_ae18233ad2c5c5": {
+      "author": "thislyc <42378143+thislyc@users.noreply.github.com>"
+    }
+  }
+}
