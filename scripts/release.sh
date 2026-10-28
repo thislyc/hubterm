@@ -3,7 +3,7 @@
 # 用法: sh scripts/release.sh [tag]          # tag 缺省 = v<package.json version>
 #       SKIP_BUILD=1 sh scripts/release.sh   # 跳过构建，直接上传 dist-release/ 里现成的产物
 # 流程: 推 main 与 tag（快速失败暴露网络问题）→ 构建三平台 → 创建 Release → 上传产物
-# 依赖: npm 依赖已装好；网络直连失败自动回退 Clash 代理 (127.0.0.1:7897)
+# 依赖: npm 依赖已装好；网络直连失败自动回退代理（通过 HUBTERM_PROXY 环境变量指定，如 http://127.0.0.1:7897）
 set -e
 cd "$(dirname "$0")/.."
 export HUBTERM_RELEASE=1   # 让本机 pre-push 钩子放行内部的 git push，避免递归
@@ -11,13 +11,21 @@ export HUBTERM_RELEASE=1   # 让本机 pre-push 钩子放行内部的 git push�
 VERSION=$(node -p "require('./package.json').version")
 TAG="${1:-v$VERSION}"
 OUT=dist-release
+PROXY="${HUBTERM_PROXY:-}"
 
 git_push() {
   # git_push <参数...>：直连与代理各试 3 次
   i=0
   until git push "$@" 2>/dev/null; do
     i=$((i + 1))
-    [ $i -ge 3 ] && { echo "    直连失败，走代理重试"; until git -c http.proxy=http://127.0.0.1:7897 -c https.proxy=http://127.0.0.1:7897 push "$@" 2>/dev/null; do i=$((i + 1)); [ $i -ge 8 ] && return 1; sleep 5; done; return 0; }
+    if [ $i -ge 3 ] && [ -n "$PROXY" ]; then
+      echo "    直连失败，走代理重试"
+      until git -c http.proxy="$PROXY" -c https.proxy="$PROXY" push "$@" 2>/dev/null; do
+        i=$((i + 1)); [ $i -ge 8 ] && return 1; sleep 5
+      done
+      return 0
+    fi
+    [ $i -ge 8 ] && return 1
     sleep 3
   done
 }
@@ -46,8 +54,12 @@ ls -lh "$OUT"
 echo "==> [5/5] 创建 Release 并上传产物"
 TOKEN=$(printf "protocol=https\nhost=github.com\n" | git credential fill | awk -F= '/^password=/{print $2}')
 try_curl() {
-  # try_curl <curl 参数...>：直连失败走代理，各试 2 次
-  curl -sS -f "$@" || curl -sS -f -x http://127.0.0.1:7897 "$@" || curl -sS -f "$@" || curl -sS -f -x http://127.0.0.1:7897 "$@"
+  # try_curl <curl 参数...>：直连失败走代理（HUBTERM_PROXY），各试 2 次
+  if [ -n "$PROXY" ]; then
+    curl -sS -f "$@" || curl -sS -f -x "$PROXY" "$@" || curl -sS -f "$@" || curl -sS -f -x "$PROXY" "$@"
+  else
+    curl -sS -f "$@" || curl -sS -f "$@"
+  fi
 }
 RELEASE_JSON=$(try_curl -X POST -H "Authorization: token $TOKEN" -H "Accept: application/vnd.github+json" \
   https://api.github.com/repos/thislyc/hubterm/releases \
