@@ -106,33 +106,15 @@
   .btn-ghost:hover { border-color: var(--blue); background: rgba(137, 180, 250, .07); }
   .cta-note { font-size: 12.5px; color: var(--muted); width: 100%; }
 
-  /* terminal mockup */
-  .term {
+  /* hero screenshot */
+  .hero-shot img { display: block; width: 100%; height: auto; }
+  .hero-shot {
     background: var(--bg-deep);
     border: 1px solid var(--line);
     border-radius: var(--radius);
     box-shadow: 0 24px 70px rgba(0, 0, 0, .5), 0 0 0 1px rgba(137, 180, 250, .05);
     overflow: hidden;
-    font-family: var(--mono);
-    font-size: 13px; line-height: 1.85;
   }
-  .term-bar {
-    display: flex; align-items: center; gap: 8px;
-    padding: 11px 14px; background: rgba(49, 50, 68, .5);
-    border-bottom: 1px solid var(--line);
-  }
-  .tl { width: 11px; height: 11px; border-radius: 50%; }
-  .tl-r { background: #f38ba8; } .tl-y { background: #f9e2af; } .tl-g { background: #a6e3a1; }
-  .term-title { margin-left: 8px; font-size: 12px; color: var(--muted); font-family: var(--sans); }
-  .term-body { padding: 18px 20px 22px; color: var(--subtext); white-space: pre-wrap; word-break: break-all; }
-  .term-body .c-cmd { color: var(--text); }
-  .term-body .c-prompt { color: var(--green); }
-  .term-body .c-dim { color: var(--muted); }
-  .term-body .c-blue { color: var(--blue); }
-  .term-body .c-yellow { color: var(--yellow); }
-  .term-body .c-comment { color: var(--muted); font-style: italic; }
-  .cursor { display: inline-block; width: 7px; height: 15px; background: var(--green); vertical-align: -2px; animation: blink 1.1s steps(1) infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
 
   /* ---------- sections ---------- */
   section { max-width: 1120px; margin: 0 auto; padding: 72px 24px; }
@@ -278,25 +260,8 @@
     </div>
   </div>
 
-  <div class="term" aria-hidden="true">
-    <div class="term-bar">
-      <span class="tl tl-r"></span><span class="tl tl-y"></span><span class="tl tl-g"></span>
-      <span class="term-title" data-i18n="term.title">生产库-01 — HubTerm</span>
-    </div>
-    <div class="term-body" data-i18n-html="term.body"><span class="c-comment"># 连接菜单式堡垒机会话（已配好登录规则）</span>
-<span class="c-prompt">➜</span> <span class="c-cmd">ssh yunwei@bastion.corp.cn</span>
-
-<span class="c-dim">Welcome to Bastion 2.0 — 集团运维入口</span>
-<span class="c-blue">1)</span> web-nginx-01        <span class="c-blue">2)</span> db-mysql-03
-<span class="c-blue">3)</span> cache-redis-02      <span class="c-blue">4)</span> kafka-04
-Opt&gt; <span class="c-dim">« 自动应答：3 »</span>
-
-<span class="c-dim">请选择登录用户:</span> root / yunwei / deploy
-login: <span class="c-dim">« 自动应答：$TARGET »</span>
-Password: <span class="c-dim">« 自动应答：$PASSWORD »</span>
-
-<span class="c-yellow">[MFA]</span> 请输入动态验证码: <span class="cursor"></span>
-<span class="c-comment"># 检测到 MFA → 弹窗等你输码，规则绝不猜</span></div>
+  <div class="hero-shot">
+    <img src="assets/screenshot-main.png" data-i18n-alt="shot.alt" alt="HubTerm 主界面：会话树、多标签终端、SFTP" />
   </div>
 </header>
 
@@ -399,15 +364,15 @@ Post:   <span class="s">sudo -i</span>
 <section id="build">
   <div class="sec-tag reveal">GET STARTED</div>
   <h2 class="reveal" data-i18n="build.h2">从源码构建，30 秒上手</h2>
-  <p class="sec-sub reveal" data-i18n="build.sub">纯 JS 技术栈（ssh2 + xterm.js + zmodem.js，无原生模块），macOS（arm64 / x64）与 Windows x64 开箱即构建，90+ 离线测试保障。</p>
+  <p class="sec-sub reveal" data-i18n="build.sub">纯 JS 技术栈（ssh2 + xterm.js + zmodem.js，无原生模块），macOS（arm64 / x64）与 Windows x64 开箱即构建，80+ 离线测试保障。</p>
   <pre class="code reveal"><span class="win-bar">terminal</span><span class="c" data-i18n="build.c1"># macOS（跟随本机架构，构建完自动装进 /Applications）</span>
 <span class="k">git</span> clone <span class="s">https://github.com/thislyc/hubterm.git</span>
 <span class="k">cd</span> hubterm && <span class="k">npm</span> install
-<span class="k">npm</span> test              <span class="c" data-i18n="build.c2"># 90+ 离线测试（mock SSH + 真实 lrzsz + MCP）</span>
+<span class="k">npm</span> test              <span class="c" data-i18n="build.c2"># 80+ 离线测试（mock SSH + 真实 lrzsz + MCP）</span>
 <span class="k">npm</span> run package       <span class="c" data-i18n="build.c3"># 或 package:intel / package:win</span></pre>
 
   <div class="shot reveal">
-    <img src="assets/screenshot-main.png" data-i18n-alt="shot.alt" alt="HubTerm 主界面：会话树、多标签终端、SFTP" loading="lazy" />
+    <img src="assets/screenshot-welcome.png" data-i18n-alt="welcome.alt" alt="HubTerm 首次启动：欢迎页与空会话树" loading="lazy" />
   </div>
 </section>
 
@@ -435,8 +400,8 @@ Post:   <span class="s">sudo -i</span>
       'hero.sub': '菜单式堡垒机自动应答、ZMODEM / SFTP、端口转发、AI Agent 安全接入——所有自动化都是你可见、可编辑的登录规则，没有黑盒。',
       'hero.ctaDownload': '下载 v2.8.0', 'hero.ctaGithub': 'GitHub 仓库', 'hero.ctaBuild': '从源码构建',
       'hero.ctaNote': 'macOS / Windows 安装包已在 GitHub Releases 提供，免费无需注册；Windows 包未签名，首跑弹 SmartScreen 时选「更多信息 → 仍要运行」。',
-      'term.title': '生产库-01 — HubTerm',
-      'term.body': '<span class="c-comment"># 连接菜单式堡垒机会话（已配好登录规则）</span>\n<span class="c-prompt">➜</span> <span class="c-cmd">ssh yunwei@bastion.corp.cn</span>\n\n<span class="c-dim">Welcome to Bastion 2.0 — 集团运维入口</span>\n<span class="c-blue">1)</span> web-nginx-01        <span class="c-blue">2)</span> db-mysql-03\n<span class="c-blue">3)</span> cache-redis-02      <span class="c-blue">4)</span> kafka-04\nOpt&gt; <span class="c-dim">« 自动应答：3 »</span>\n\n<span class="c-dim">请选择登录用户:</span> root / yunwei / deploy\nlogin: <span class="c-dim">« 自动应答：$TARGET »</span>\nPassword: <span class="c-dim">« 自动应答：$PASSWORD »</span>\n\n<span class="c-yellow">[MFA]</span> 请输入动态验证码: <span class="cursor"></span>\n<span class="c-comment"># 检测到 MFA → 弹窗等你输码，规则绝不猜</span>',
+      'shot.alt': 'HubTerm 主界面：会话树、多标签终端、SFTP',
+      'welcome.alt': 'HubTerm 首次启动：欢迎页与空会话树，开箱即用',
       'features.h2': '一个终端客户端，接住运维的全部日常',
       'features.sub': '对标 SecureCRT 的完整工作流：会话管理、自动登录、文件传输、隧道转发，全部本地化存储，零云端依赖。',
       'feat.bastion.h': '堡垒机自动应答', 'feat.bastion.p': '每会话的 expect→send 登录规则（兼容 SecureCRT Logon Actions），支持 $PASSWORD / $TARGET 变量、登录后命令、MFA 弹窗。规则之外立刻交还键盘。',
@@ -473,9 +438,9 @@ Post:   <span class="s">sudo -i</span>
       'cmp.r5': 'AI Agent 接入（MCP）', 'cmp.r5a': '✅ 内置可审计',
       'cmp.r6': '价格', 'cmp.r6a': '免费 · MIT', 'cmp.r6b': '订阅', 'cmp.r6c': '免费',
       'build.h2': '从源码构建，30 秒上手',
-      'build.sub': '纯 JS 技术栈（ssh2 + xterm.js + zmodem.js，无原生模块），macOS（arm64 / x64）与 Windows x64 开箱即构建，90+ 离线测试保障。',
+      'build.sub': '纯 JS 技术栈（ssh2 + xterm.js + zmodem.js，无原生模块），macOS（arm64 / x64）与 Windows x64 开箱即构建，80+ 离线测试保障。',
       'build.c1': '# macOS（跟随本机架构，构建完自动装进 /Applications）',
-      'build.c2': '# 90+ 离线测试（mock SSH + 真实 lrzsz + MCP）',
+      'build.c2': '# 80+ 离线测试（mock SSH + 真实 lrzsz + MCP）',
       'build.c3': '# 或 package:intel / package:win',
       'shot.alt': 'HubTerm 主界面：会话树、多标签终端、SFTP',
       'foot.copyright': 'MIT License · © <span id="year">2026</span> Lu Yicheng',
@@ -490,8 +455,8 @@ Post:   <span class="s">sudo -i</span>
       'hero.sub': 'Menu-bastion auto-answer, ZMODEM / SFTP, port forwarding, safe AI-agent access — every automation is a login rule you can read and edit. No black boxes.',
       'hero.ctaDownload': 'Download v2.8.0', 'hero.ctaGithub': 'GitHub Repository', 'hero.ctaBuild': 'Build from source',
       'hero.ctaNote': 'Prebuilt packages for macOS / Windows are on GitHub Releases — free, no signup. Windows builds are unsigned: SmartScreen → More info → Run anyway.',
-      'term.title': 'prod-db-01 — HubTerm',
-      'term.body': '<span class="c-comment"># Open a menu-bastion session (login rules already configured)</span>\n<span class="c-prompt">➜</span> <span class="c-cmd">ssh ops@bastion.corp.cn</span>\n\n<span class="c-dim">Welcome to Bastion 2.0 — Group Ops Gateway</span>\n<span class="c-blue">1)</span> web-nginx-01        <span class="c-blue">2)</span> db-mysql-03\n<span class="c-blue">3)</span> cache-redis-02      <span class="c-blue">4)</span> kafka-04\nOpt&gt; <span class="c-dim">« auto-answer: 3 »</span>\n\n<span class="c-dim">Select login user:</span> root / ops / deploy\nlogin: <span class="c-dim">« auto-answer: $TARGET »</span>\nPassword: <span class="c-dim">« auto-answer: $PASSWORD »</span>\n\n<span class="c-yellow">[MFA]</span> Enter one-time code: <span class="cursor"></span>\n<span class="c-comment"># MFA detected → a dialog waits for YOU; rules never guess</span>',
+      'shot.alt': 'HubTerm main window: session tree, tabbed terminals, SFTP',
+      'welcome.alt': 'HubTerm first launch: welcome screen with an empty session tree — ready out of the box',
       'features.h2': 'One terminal for the whole ops day',
       'features.sub': 'A complete SecureCRT-class workflow: session management, auto-login, file transfer, tunneling — all stored locally, zero cloud dependency.',
       'feat.bastion.h': 'Bastion auto-answer', 'feat.bastion.p': 'Per-session expect→send login rules (SecureCRT Logon Actions equivalent) with $PASSWORD / $TARGET variables, post-login commands and MFA dialogs. Anything off-script hands the keyboard back instantly.',
@@ -528,9 +493,9 @@ Post:   <span class="s">sudo -i</span>
       'cmp.r5': 'AI-agent access (MCP)', 'cmp.r5a': '✅ built-in, audited',
       'cmp.r6': 'Price', 'cmp.r6a': 'Free · MIT', 'cmp.r6b': 'subscription', 'cmp.r6c': 'free',
       'build.h2': 'Build from source in 30 seconds',
-      'build.sub': 'A pure-JS stack (ssh2 + xterm.js + zmodem.js, no native modules); macOS (arm64 / x64) and Windows x64 build out of the box, backed by 90+ offline tests.',
+      'build.sub': 'A pure-JS stack (ssh2 + xterm.js + zmodem.js, no native modules); macOS (arm64 / x64) and Windows x64 build out of the box, backed by 80+ offline tests.',
       'build.c1': '# macOS (follows host arch; installs into /Applications when done)',
-      'build.c2': '# 90+ offline tests (mock SSH + real lrzsz + MCP)',
+      'build.c2': '# 80+ offline tests (mock SSH + real lrzsz + MCP)',
       'build.c3': '# or package:intel / package:win',
       'shot.alt': 'HubTerm main window: session tree, tabbed terminals, SFTP',
       'foot.copyright': 'MIT License · © <span id="year">2026</span> Lu Yicheng',
