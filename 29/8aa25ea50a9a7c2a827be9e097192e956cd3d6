@@ -1,0 +1,24 @@
+.github/ISSUE_TEMPLATE/bug_report.md
+  h_be13be0f7be62b 1-33
+.github/ISSUE_TEMPLATE/feature_request.md
+  h_be13be0f7be62b 1-23
+README.md
+  h_be13be0f7be62b 110-111,115,176
+README.zh-CN.md
+  h_be13be0f7be62b 98-99,103,148,159
+SECURITY.md
+  h_be13be0f7be62b 1-33
+website/index.html
+  h_be13be0f7be62b 274-275,277,436-437,491-492
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "298aa25ea50a9a7c2a827be9e097192e956cd3d6",
+  "prompts": {},
+  "humans": {
+    "h_be13be0f7be62b": {
+      "author": "thislyc <thislyc@qq.com>"
+    }
+  }
+}
