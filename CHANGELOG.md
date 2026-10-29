@@ -2,6 +2,12 @@
 
 ## Unreleased — 更新检查 + 官网上线
 
+- **修复认证弹窗被 15 秒握手超时掐断**：ssh2 内置 `readyTimeout` 从连接起一直计时到认证完成，MFA 验证码/键盘交互密码/host key 指纹变更确认三个弹窗只要开着就照计时——用户掏手机看验证码超过 15 秒，连接被销毁、再输入无效，且错误状态不触发自动重连（「输了 MFA 没反应」的根因）。改为引擎自管握手计时：`readyTimeout: 0` 停用内置计时，认证弹窗与 host key 确认未决期间暂停、提交后重新起算；`handshakeTimeoutMs` 可按会话覆盖（测试用），静默服务器兜底能力不变。
+- **修复一次断线触发两次自动重连（并行僵尸连接）**：断线时 conn close 与 stream close 接连到达，`disconnected` 状态发两次——上层每次都累加 attempts 并各排一个重连定时器，两条新连接同时连同一主机、输出交错灌进同一终端。引擎侧终态去重只发一次；主进程侧 `wireSession` 换新连接后旧会话的 status/data 事件全部作废（`st.ssh !== s` 守卫），手动重连（⌘R）销毁旧连接引发的 disconnected 同理不再误排自动重连。
+- **修复 MFA 判定正则把 `\s` 写成 `\\s`**：`6\s*digits` / `verification\s*code` 实际永远匹配不上，纯英文 "Verification code:" 提示会落进「未知提示先试密码」分支，把登录密码当验证码提交（真实堡垒机有锁号风险）。
+- **修复认证弹窗互相顶掉**：MFA 弹窗不排队、直接顶掉正在显示的密码弹窗，被顶会话的 `askPassword` Promise 永远悬空、连接卡死。现在 MFA/密码共用一个弹窗队列依次展示。
+- **修复 `st.mfaAsked` 一次置真终身有效**：MFA 会话重连后若发生普通密码错误，会被误报「MFA 验证失败」且不再弹密码重输框；改为每次连接尝试独立判定。
+- 测试：automaton 新增 5 项（MFA 慢输入暂停计时 / hostKey 慢确认暂停计时 / 自管握手超时可配置生效 / 断线 disconnected 只发一次 / 纯英文验证码弹窗索码且密码零误交），mockserver 新增 `mfaen` 模式（服务端记录错误提交痕迹）。
 - **官网上线**：https://thislyc.github.io/hubterm/ （GitHub Pages，gh-pages 分支，`scripts/deploy-website.sh` 一键同步）。README 徽章与官网入口指向线上地址。
 - **截图随语言切换**：英文页配英文界面截图、中文页配中文界面截图（官网与 README 同步产出两套截图；顺带修复一个真 bug——渲染层此前不读 settings.json 保存的语言偏好，重装/换机后会丢）。
 - **移除 GitHub Actions**：自动化构建下线（账户计费冻结 + 发版已走本地 `npm run release` 管线），删除 ci.yml；账单问题解决后可随时恢复。

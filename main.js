@@ -262,6 +262,7 @@ function persistPassword(cfgKey, host, user, password) {
 }
 
 function wireSession(sid, st, cfg) {
+  st.mfaAsked = false; // 每次连接尝试独立判定：上一次的 MFA 经历不累计到本次错误归因
   const s = new SshSession(cfg, {
     askMfa: (prompt, opts) =>
       new Promise((resolve) => {
@@ -281,10 +282,12 @@ function wireSession(sid, st, cfg) {
   st.logStream = openLogStream(cfg);
 
   s.on('data', (chunk) => {
+    if (st.ssh !== s) return; // 本会话已被更新连接替换：旧会话的事件全部作废
     st.logStream && st.logStream.write(chunk);
     try { st.sentry.consume(chunk); } catch (e) { send('session:data', { id: sid, data: chunk }); }
   });
   s.on('status', (status, msg) => {
+    if (st.ssh !== s) return; // 替换后旧会话的 disconnected/error 不得再触发重连或遮罩
     send('session:status', { id: sid, status, msg });
     if (status === 'connected') {
       st.attempts = 0;

@@ -25,16 +25,18 @@ const panesById = new Map();      // sid -> pane
 let activeTabId = null;
 let mfaFor = null;
 let credFor = null;
-const credQueue = [];
-function showNextCred() {
-  if (credFor != null) return;                 // 已有弹窗在展示
-  if (!$('#mfa-modal').classList.contains('hidden')) return; // MFA 弹窗占用中
-  const next = credQueue.shift();
+const authQueue = []; // 认证弹窗统一排队（MFA/密码共用）：互相顶掉会让被顶会话的 Promise 永远悬空
+function showNextAuth() {
+  if (mfaFor != null || credFor != null) return; // 已有弹窗在展示
+  if (!$('#mfa-modal').classList.contains('hidden')) return;
+  const next = authQueue.shift();
   if (!next) return;
-  showCred(next.id, next.prompt, next.kind);
+  if (next.type === 'mfa') showMfa(next.id, next.prompt, next.mfa);
+  else showCred(next.id, next.prompt, next.kind);
 }
 function showCred(id, prompt, kind) {
   credFor = id;
+  mfaFor = null;
   $('#cred-title').textContent = kind === 'rejected' ? t('mfa.rejected') : t('mfa.enterPassword');
   $('#mfa-prompt').textContent = prompt || t('mfa.enterPassword');
   const input = $('#mfa-input');
@@ -209,10 +211,10 @@ async function init() {
     if (p) p.term.write(new Uint8Array(data));
   });
   window.hub.onStatus(({ id, status, msg }) => onStatus(id, status, msg));
-  window.hub.onMfa(({ id, prompt, mfa }) => showMfa(id, prompt, mfa));
+  window.hub.onMfa(({ id, prompt, mfa }) => { authQueue.push({ type: 'mfa', id, prompt, mfa }); showNextAuth(); });
   window.hub.onCred(({ id, prompt, kind }) => {
-    credQueue.push({ id, prompt, kind });
-    showNextCred();
+    authQueue.push({ type: 'cred', id, prompt, kind });
+    showNextAuth();
   });
   window.hub.onZmodem(onZmodem);
   window.hub.onSftpProgress(({ id, name, bytes, op }) => {
@@ -882,6 +884,7 @@ async function splitPane(dir) {
 function onStatus(id, status, msg) {
   const pane = panesById.get(id);
   if (!pane) return;
+  const prev = pane.status; // 前态先存：setPaneStatus 之后 pane.status 已是本次状态
   setPaneStatus(pane, status);
   // SFTP 抽屉与该会话的绑定：断开即停用，重连成功且抽屉仍开着则自动重绑
   if (sftpState.sid === id && (status === 'disconnected' || status === 'error')) {
@@ -914,7 +917,7 @@ function onStatus(id, status, msg) {
   } else if (status === 'error') {
     showPaneError(pane, t('pane.connectFailed'), msg);
   } else if (status === 'disconnected') {
-    if (pane.status !== 'error') showPaneError(pane, t('pane.disconnected'), msg || '');
+    if (prev !== 'error') showPaneError(pane, t('pane.disconnected'), msg || '');
   }
 }
 
@@ -949,7 +952,7 @@ function replyMfa(code) {
     mfaFor = null;
   }
   $('#mfa-modal').classList.add('hidden');
-  showNextCred();
+  showNextAuth();
 }
 
 /* ================= 快速打开面板 ================= */

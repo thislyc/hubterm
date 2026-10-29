@@ -305,6 +305,78 @@ const base = { key: 'test', name: 'test', host: '127.0.0.1', user: 'mockuser', t
     s.destroy();
   }
 
+  // 17. 认证弹窗未决期间暂停握手计时：输入耗时超过超时设置也能登录成功
+  //     （回归背景：ssh2 内置 readyTimeout 不区分等待对象，慢慢输 MFA 会被掐死且不自动重连）
+  await startMockServer('mfaprompt', 2226);
+  {
+    const s = new SshSession(
+      { ...base, type: 'ssh', port: 2226, password: MOCK_PW, rules: [], handshakeTimeoutMs: 800 },
+      { askMfa: () => new Promise((res) => setTimeout(() => res(MFA_CODE), 1800)) } // 输入耗时 > 超时设置
+    );
+    s.connect();
+    await waitStatus(s, 'connected');
+    ok('MFA 慢输入: 弹窗期间暂停握手计时', s.status === 'connected');
+    s.destroy();
+  }
+
+  // 18. host key 确认慢（用户读指纹变更警告）同样暂停计时
+  {
+    const s = new SshSession(
+      {
+        ...base, type: 'direct', port: 2221, password: MOCK_PW, handshakeTimeoutMs: 800,
+        verifyHost: () => new Promise((res) => setTimeout(() => res(true), 1800)),
+      }
+    );
+    s.connect();
+    await waitStatus(s, 'connected');
+    ok('hostKey 慢确认: 弹窗期间暂停握手计时', s.status === 'connected');
+    s.destroy();
+  }
+
+  // 19. 静默服务器：自管握手超时按配置生效（兜底能力不因内置 readyTimeout 停用而丢失）
+  {
+    const net = require('net');
+    const silent = net.createServer(() => {});
+    await new Promise((r) => silent.listen(0, '127.0.0.1', r));
+    const t0 = Date.now();
+    const s = new SshSession({ ...base, type: 'direct', host: '127.0.0.1', port: silent.address().port, password: MOCK_PW, handshakeTimeoutMs: 600 });
+    s.connect();
+    let msg = '';
+    await new Promise((res) => { s.on('status', (st, m) => { if (st === 'error') { msg = m; res(); } }); });
+    const secs = (Date.now() - t0) / 1000;
+    ok('静默SSH: 自管握手超时生效(<3s)', secs < 3 && /握手|handshake/i.test(msg), `${secs.toFixed(1)}s: ${msg.slice(0, 40)}`);
+    s.destroy();
+    silent.close();
+  }
+
+  // 20. 断线只发一次 disconnected（一次断线 = 一次重连预算；重复触发会排出并行连接）
+  {
+    const s = new SshSession({ ...base, type: 'direct', port: 2221, password: MOCK_PW });
+    s.connect();
+    await waitStatus(s, 'connected');
+    const events = [];
+    s.on('status', (st) => events.push(st));
+    s.conn.end();
+    await new Promise((r) => setTimeout(r, 600));
+    const n = events.filter((x) => x === 'disconnected').length;
+    ok('断线: disconnected 只发一次', n === 1, JSON.stringify(events));
+    s.destroy();
+  }
+
+  // 21. 纯英文 "Verification code:" 提示必须判为 MFA 弹窗索码，密码绝不被当验证码提交
+  {
+    const server = await startMockServer('mfaen', 2227);
+    let asked = 0;
+    const s = new SshSession(
+      { ...base, type: 'ssh', port: 2227, password: MOCK_PW, rules: [] },
+      { askMfa: async (prompt) => { asked++; return /verification/i.test(prompt) ? MFA_CODE : MOCK_PW; } }
+    );
+    s.connect();
+    await waitStatus(s, 'connected');
+    ok('英文验证码: 弹窗索码且密码零误交', asked === 1 && !server.wrongKb, `弹窗=${asked} 误交=${server.wrongKb || 0}`);
+    s.destroy();
+  }
+
   const failed = results.filter((r) => !r.pass).length;
   console.log(`\n结果: ${results.length - failed}/${results.length} 通过`);
   process.exit(failed ? 1 : 0);
