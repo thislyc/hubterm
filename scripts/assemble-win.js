@@ -59,6 +59,8 @@ function findOrDownloadZip() {
     run('node', ['test/automaton.test.js']);
     run('node', ['test/zmodem.test.js']);
     run('node', ['test/mcp.test.js']);
+    run('node', ['test/importers.test.js']);
+    run('node', ['test/i18n.test.js']);
   }
 
   console.log('==> 2/5 应用 zmodem 兼容补丁 + 确认 icon.ico');

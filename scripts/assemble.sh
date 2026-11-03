@@ -16,6 +16,8 @@ echo "==> 1/5 运行测试"
 node test/automaton.test.js
 node test/zmodem.test.js
 node test/mcp.test.js
+node test/importers.test.js
+node test/i18n.test.js
 
 echo "==> 2/5 应用 zmodem 兼容补丁"
 sh scripts/patch-zmodem.sh
