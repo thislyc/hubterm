@@ -1,7 +1,15 @@
 # Changelog
 
-## Unreleased — 更新检查 + 官网上线
+## 2.9.0 (2026-11-04) — 会话导入 + Windows 原生标题栏 + 连接链路修复 + 官网上线
 
+- **会话导入：一键迁移其他终端的会话库**：菜单「会话 → 导入其他终端会话…」支持 SecureCRT（.ini，可选 Config 会话目录）、Xshell（.xsh）、MobaXterm（.mxtsessions）、PuTTY（.reg 导出）与 CSV/文本主机清单，格式按文件内容自动识别（`lib/importers.js` 纯确定性解析——认不出的文件明确报「未识别」，不猜测不硬凑）。导入前预览勾选（同 key 或 host+port+user 三元组已存在默认不勾禁选），各来源密码均为密文无法迁移、导入后首次连接时输入。
+- **Windows 原生标题栏自绘**：Windows 改隐藏系统标题栏，内容顶到第一像素；右上自绘最小化/最大化/关闭三键（关闭钮悬停红），标签条左端新增 ☰ 常驻菜单按钮（菜单条 autoHideMenuBar 默认藏起、Alt 亦可临时呼出，按钮弹同一份原生菜单模板），标签条空白处双击 = 最大化/还原。macOS/Linux 界面零变化。
+- **修复渲染层三处真缺陷**：①终端内增量搜索静默失效——SearchAddon 0.13 没有 `find()` 方法（调用抛 TypeError 被 try/catch 吞掉），改用权威 API `findNext(q)`，「输入即搜」从此真正生效；②最大化 → 还原窗口后终端底部被裁切滚不到底——`.term-box` 缺 `min-height:0`，flex 子项被内容最小高度顶住不再收缩、ResizeObserver 永不触发 fit，补 `min-height:0 + overflow:hidden`；③会话树/快速打开连点会开出两个同会话标签——连接握手期间加去重闸。
+- **修复个别环境启动「进程活着但窗口永不出现」**：首绘慢时 `ready-to-show` 迟迟不触发，5 秒兜底强制 `show()`（幂等，事件正常时空跑）。
+- **跨平台正确性**：①`~/.ssh/config` 导入的 IdentityFile `~` 展开在 Windows 产出混合分隔符（`C:\Users\x/.ssh/id_rsa`），改 `path.join` 归一、绝对路径原样保留；②测试数据目录统一走代码真正读取的 `HUBTERM_HOME`——原来只设 `HOME`，Windows 的 `os.homedir()` 不认它（sessions 测试全挂、store 测试把夹具写穿到真实用户目录）；③zmodem 集成测试在缺 lrzsz 的机器上明确 SKIP，不再 spawn ENOENT 崩溃挡住测试链。
+- **Windows 本机打包**：`npm run package:win` 原生 Windows 可直接跑——electron 缓存目录按平台解析（%LOCALAPPDATA%\electron\Cache）、rsync 缺失回退 `fs.cpSync`+顶层排除、`HUBTERM_SKIP_TESTS=1` 可跳过打包前测试闸。
+- **交互打磨**：标签中键关闭（终端客户端惯例）；侧栏搜索回车直连首个命中会话、Esc 清词或失焦回终端；弹窗关闭后焦点归还活动终端；窗格关闭钮命中区 16→20px；渲染层加 CSP（脚本/样式锁 self、禁远程连接，页面全部特权走 IPC）。
+- **测试**：新增 `test/importers.test.js`（31 项）与 `test/i18n.test.js`（中英 key 一致 / 占位符对齐连续 / 代码 `t()` 与 index.html `data-i18n*` 词条接线全量审计，8 项）入 `npm test` 链；全链在 Windows 上 EXIT=0。本批含若干自同源内部发行版回移植的通用改进（其内部 AI 与内网服务能力不含在内）。
 - **修复认证弹窗被 15 秒握手超时掐断**：ssh2 内置 `readyTimeout` 从连接起一直计时到认证完成，MFA 验证码/键盘交互密码/host key 指纹变更确认三个弹窗只要开着就照计时——用户掏手机看验证码超过 15 秒，连接被销毁、再输入无效，且错误状态不触发自动重连（「输了 MFA 没反应」的根因）。改为引擎自管握手计时：`readyTimeout: 0` 停用内置计时，认证弹窗与 host key 确认未决期间暂停、提交后重新起算；`handshakeTimeoutMs` 可按会话覆盖（测试用），静默服务器兜底能力不变。
 - **修复一次断线触发两次自动重连（并行僵尸连接）**：断线时 conn close 与 stream close 接连到达，`disconnected` 状态发两次——上层每次都累加 attempts 并各排一个重连定时器，两条新连接同时连同一主机、输出交错灌进同一终端。引擎侧终态去重只发一次；主进程侧 `wireSession` 换新连接后旧会话的 status/data 事件全部作废（`st.ssh !== s` 守卫），手动重连（⌘R）销毁旧连接引发的 disconnected 同理不再误排自动重连。
 - **修复 MFA 判定正则把 `\s` 写成 `\\s`**：`6\s*digits` / `verification\s*code` 实际永远匹配不上，纯英文 "Verification code:" 提示会落进「未知提示先试密码」分支，把登录密码当验证码提交（真实堡垒机有锁号风险）。
