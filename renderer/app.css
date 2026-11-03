@@ -104,6 +104,18 @@ input:focus { border-color: var(--accent); }
 body.side-resizing { cursor: col-resize; }
 body.side-resizing #sidebar, body.side-resizing #main { pointer-events: none; }
 .side-top { padding: 16px 16px 10px 78px; -webkit-app-region: drag; }
+body.win .side-top, body:not(.mac):not(.win) .side-top { padding-left: 16px; }
+
+/* ---------- Windows 自绘窗口控制（titleBarStyle:hidden 后替代原生三键） ---------- */
+#win-controls { display: none; position: fixed; top: 0; right: 0; z-index: 60; }
+body.win #win-controls { display: flex; align-items: stretch; height: 40px; background: var(--bg); }
+#wc-min, #wc-max, #wc-close {
+  width: 46px; display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim); -webkit-app-region: no-drag;
+}
+#wc-min:hover, #wc-max:hover { background: var(--bg-hover); color: var(--text); }
+#wc-close:hover { background: #e81123; color: #fff; }
+body.win #tabbar { padding-right: 146px; } /* 右上让位自绘三键（3×46+缓冲） */
 .wordmark { font: 600 15px/1 -apple-system, sans-serif; letter-spacing: .3px; }
 .wordmark span { color: var(--accent); }
 .side-search { padding: 4px 12px 10px; position: relative; }
@@ -261,6 +273,40 @@ body.side-resizing #sidebar, body.side-resizing #main { pointer-events: none; }
 .form-grid > input, .form-grid > select { width: 100%; height: 32px; }
 #ed-cursor-row { display: flex; gap: 8px; align-items: center; }
 #ed-cursor { width: auto; flex: 1; min-width: 0; }
+
+/* ---------- 导入会话弹窗 ---------- */
+#import-modal .modal { width: 680px; }
+.imp-btns { display: flex; gap: 10px; margin-bottom: 12px; }
+.imp-btns button { flex: 1; }
+#import-modal p { margin-bottom: 8px; }
+.imp-note { font-size: 11px; color: var(--text-faint); line-height: 1.6; }
+#imp-loading { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 26px 4px; font-size: 13px; color: var(--text-dim); }
+.imp-spin {
+  width: 14px; height: 14px; border-radius: 50%; flex: none;
+  border: 2px solid var(--scroll); border-top-color: var(--accent);
+  animation: spin .8s linear infinite;
+}
+#imp-fail { text-align: center; padding: 8px 0 2px; }
+.imp-table-wrap { max-height: 300px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; }
+.imp-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.imp-table th {
+  position: sticky; top: 0; background: var(--bg-panel); z-index: 1;
+  text-align: left; font-weight: 600; color: var(--text-dim);
+  padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+.imp-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); color: var(--text); }
+.imp-table tbody tr:last-child td { border-bottom: none; }
+.imp-table tbody tr:hover { background: var(--bg-hover); }
+.imp-table tr.exists td { color: var(--text-faint); }
+.imp-table .c-check { width: 30px; text-align: center; }
+.imp-table .c-num { width: 48px; text-align: right; font-family: var(--mono); }
+.imp-name { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.imp-host { font-family: var(--mono); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.imp-dim { color: var(--text-dim); max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.imp-badge {
+  margin-left: 6px; font-size: 10px; color: var(--text-faint);
+  border: 1px solid var(--border); border-radius: 4px; padding: 0 4px;
+}
 
 /* ---------- 右键菜单 / Toast ---------- */
 #ctx-menu {
@@ -510,9 +556,9 @@ body.side-resizing #sidebar, body.side-resizing #main { pointer-events: none; }
   display: flex; align-items: center; gap: 6px; height: 20px; padding: 0 6px; flex-shrink: 0;
   background: var(--pane-head); font-size: 10.5px; color: var(--text-faint); border-bottom: 1px solid var(--border);
 }
-.pane-head .p-close { margin-left: auto; width: 16px; height: 16px; border-radius: 4px; }
+.pane-head .p-close { margin-left: auto; width: 20px; height: 20px; border-radius: 4px; }
 .pane-head .p-close:hover { background: var(--bg-hover); color: var(--text); }
-.pane .term-box { flex: 1; position: relative; }
+.pane .term-box { flex: 1; position: relative; min-height: 0; overflow: hidden; }
 .pane.focused .pane-head { color: var(--text); background: var(--pane-head-on); }
 
 /* textarea */

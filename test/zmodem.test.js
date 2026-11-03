@@ -1,11 +1,20 @@
 'use strict';
 // ZMODEM 集成测试：与真实 lrzsz (sz/rz) 进程对打，验证收/发两个方向
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
 const Zmodem = require('zmodem.js');
+
+// 预检：lrzsz 未安装（Windows 常见）时明确跳过而不是 spawn ENOENT 崩溃——
+// 有 sz/rz 的环境照常全量严测，缺二进制是环境限制而非回归
+for (const bin of ['sz', 'rz']) {
+  if (spawnSync(bin, ['--help'], { stdio: 'ignore' }).error) {
+    console.log(`✓ SKIP  ZMODEM 集成测试（系统未安装 lrzsz 的 ${bin} 命令；安装 lrzsz 后本测试全量生效）`);
+    process.exit(0);
+  }
+}
 
 const results = [];
 function ok(name, cond, extra) {

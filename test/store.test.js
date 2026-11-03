@@ -4,9 +4,11 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-// 隔离 HOME，避免污染真实 ~/.hubterm
+// 隔离数据目录，避免污染真实 ~/.hubterm——走代码真正读取的 HUBTERM_HOME 覆盖
+// （HOME 在 Windows 的 os.homedir() 不生效，只设 HOME 会把测试数据写进真实用户目录）
 const FAKE_HOME = fs.mkdtempSync(path.join(os.tmpdir(), 'hubterm-store-'));
 process.env.HOME = FAKE_HOME;
+process.env.HUBTERM_HOME = path.join(FAKE_HOME, '.hubterm');
 delete require.cache[require.resolve('../lib/store')];
 const store = require('../lib/store');
 

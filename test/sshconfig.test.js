@@ -48,6 +48,13 @@ ok('转换: 无 IdentityFile -> 密码认证', sess.find((s) => s.name === 'alia
 ok('转换: ProxyJump 归入跳板分组', sess.find((s) => s.name === 'db-jump').group === 'ssh-config/跳板');
 ok('转换: alias-only 无 HostName 用别名', sess.find((s) => s.name === 'alias-only').host === 'alias-only');
 
+// keyPath 展开语义：~ 走 path.join(homedir, …)（Windows 下无混合分隔符）；绝对路径原样保留
+const absParsed = parseSSHConfig('Host k1\n  HostName 10.0.0.1\n  IdentityFile /opt/keys/id_rsa\n');
+ok('转换: 绝对 IdentityFile 原样保留', toSessions(absParsed, null)[0].keyPath === '/opt/keys/id_rsa');
+const tildeParsed = parseSSHConfig('Host k2\n  HostName 10.0.0.2\n  IdentityFile ~/keys/id_rsa\n');
+const k2 = toSessions(tildeParsed, null)[0];
+ok('转换: ~ 展开为 path.join 语义', k2.keyPath === path.join(os.homedir(), 'keys/id_rsa'));
+
 const filtered = toSessions(parsed, new Set(['ssh-config/web1']));
 ok('合并: 已存在的 key 跳过', !filtered.some((s) => s.key === 'ssh-config/web1') && filtered.length === 3);
 

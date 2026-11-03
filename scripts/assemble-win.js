@@ -9,6 +9,7 @@
 // 产物：dist/HubTerm-win32-x64/ 与 dist/HubTerm-<版本>-win-x64.zip（未签名，SmartScreen 会提示）
 const { execFileSync, spawnSync } = require('child_process');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
@@ -22,9 +23,18 @@ function run(cmd, args, opts = {}) {
   execFileSync(cmd, args, { stdio: 'inherit', cwd: ROOT, ...opts });
 }
 
+/** electron 官方缓存目录（@electron/get 惯例，按平台；已有缓存就不重复下载） */
+function electronCacheDir() {
+  if (process.platform === 'win32') {
+    return path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'electron', 'Cache');
+  }
+  if (process.platform === 'darwin') return path.join(os.homedir(), 'Library', 'Caches', 'electron');
+  return path.join(os.homedir(), '.cache', 'electron');
+}
+
 /** 在 electron 缓存里找 win32 zip；没有则从镜像下载（与 assemble.sh 共用缓存目录） */
 function findOrDownloadZip() {
-  const cacheGlobDir = path.join(process.env.HOME || '', 'Library', 'Caches', 'electron');
+  const cacheGlobDir = electronCacheDir();
   const name = `electron-v${EV}-win32-x64.zip`;
   const found = fs.existsSync(cacheGlobDir)
     ? fs.readdirSync(cacheGlobDir)
@@ -42,10 +52,14 @@ function findOrDownloadZip() {
 }
 
 (async () => {
-  console.log('==> 1/5 运行测试');
-  run('node', ['test/automaton.test.js']);
-  run('node', ['test/zmodem.test.js']);
-  run('node', ['test/mcp.test.js']);
+  if (process.env.HUBTERM_SKIP_TESTS) {
+    console.log('==> 1/5 跳过测试（HUBTERM_SKIP_TESTS）');
+  } else {
+    console.log('==> 1/5 运行测试');
+    run('node', ['test/automaton.test.js']);
+    run('node', ['test/zmodem.test.js']);
+    run('node', ['test/mcp.test.js']);
+  }
 
   console.log('==> 2/5 应用 zmodem 兼容补丁 + 确认 icon.ico');
   run('sh', ['scripts/patch-zmodem.sh']);
@@ -70,15 +84,29 @@ function findOrDownloadZip() {
   fs.renameSync(path.join(dir, 'electron.exe'), path.join(dir, 'HubTerm.exe'));
   fs.rmSync(path.join(dir, 'resources', 'default_app.asar'), { force: true });
 
-  // 代码 + 生产依赖（与 assemble.sh 相同的排除清单；纯 JS，无平台原生件）
+  // 代码 + 生产依赖（与 assemble.sh 相同的排除清单；纯 JS，无平台原生件）。
+  // rsync 缺失（原生 Windows 无此命令）时回退 fs.cpSync + 顶层排除——原生 win 也能打包。
   const appDir = path.join(dir, 'resources', 'app');
   fs.mkdirSync(appDir, { recursive: true });
-  run('rsync', ['-a',
-    '--exclude', 'electron', '--exclude', 'electron-packager', '--exclude', '.bin',
-    '--exclude', 'cpu-features', '--exclude', 'nan',
-    'node_modules/', path.join(appDir, 'node_modules') + '/']);
+  const NM_EXCLUDES = ['electron', 'electron-packager', '.bin', 'cpu-features', 'nan'];
+  if (spawnSync('rsync', ['--version'], { stdio: 'ignore' }).status === 0) {
+    run('rsync', ['-a',
+      ...NM_EXCLUDES.flatMap((x) => ['--exclude', x]),
+      'node_modules/', path.join(appDir, 'node_modules') + '/']);
+  } else {
+    console.log('==> rsync 不可用（原生 Windows），用 fs.cpSync + 顶层排除回退');
+    const nmSrc = path.join(ROOT, 'node_modules');
+    fs.cpSync(nmSrc, path.join(appDir, 'node_modules'), {
+      recursive: true,
+      filter: (src) => {
+        const rel = path.relative(nmSrc, src);
+        if (!rel) return true; // 根目录本身放行
+        return !NM_EXCLUDES.includes(rel.split(path.sep)[0]); // 顶层目录名命中排除清单即剪枝
+      },
+    });
+  }
   for (const f of ['main.js', 'preload.js', 'lib', 'renderer', 'package.json']) {
-    execFileSync('cp', ['-R', f, appDir], { cwd: ROOT });
+    fs.cpSync(path.join(ROOT, f), path.join(appDir, f), { recursive: true });
   }
 
   console.log('==> 4/5 嵌入 exe 图标/版本（需 wine）');

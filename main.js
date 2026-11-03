@@ -1,5 +1,5 @@
 'use strict';
-const { app, BrowserWindow, Menu, ipcMain, dialog, shell, clipboard } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, shell, clipboard, nativeTheme } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const net = require('net');
@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const Zmodem = require('zmodem.js');
 const { loadSessions, publicSessions, saveSessions, DATA_DIR } = require('./lib/sessions');
 const sshconfig = require('./lib/sshconfig');
+const importers = require('./lib/importers');
 
 const store = require('./lib/store');
 const { SshSession } = require('./lib/connect');
@@ -389,18 +390,29 @@ function destroyState(id) {
   credWaiters.delete(id);
 }
 
+// 生效外观：auto 按系统折算（启动底色跟随，避免浅色系统先闪一帧深色）
+function resolvedTheme() {
+  if (settings.uiTheme === 'light' || settings.uiTheme === 'dark') return settings.uiTheme;
+  return nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+}
+
 function createWindow() {
   win = new BrowserWindow({
     width: 1280,
     height: 800,
     minWidth: 940,
     minHeight: 560,
-    // macOS 融合式红绿灯；Windows/Linux 走系统标准标题栏
+    // macOS 融合式红绿灯；Windows 用隐藏标题栏 + 自绘三键（内容顶到第一像素，
+    // 与自定义标题栏设计一致；菜单条 autoHideMenuBar 藏起，Alt 可呼，☰ 按钮弹同一份模板）；
+    // Linux 维持系统标题栏
     ...(process.platform === 'darwin'
       ? { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 12, y: 14 } }
       : {}),
-    // 启动一瞬间的窗口底色跟随上次的外观设置，避免浅色模式下先闪一帧深色
-    backgroundColor: settings.uiTheme === 'light' ? '#eef1f6' : '#111118',
+    ...(process.platform === 'win32'
+      ? { titleBarStyle: 'hidden', autoHideMenuBar: true }
+      : {}),
+    // 启动一瞬间的窗口底色跟随生效的外观设置（auto 按系统折算）
+    backgroundColor: resolvedTheme() === 'light' ? '#eef1f6' : '#111118',
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -410,8 +422,14 @@ function createWindow() {
   });
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   win.once('ready-to-show', () => win.show());
+  // 兜底：个别环境首绘慢，ready-to-show 迟迟不触发，进程活着但窗口永远不出现；
+  // 5 秒后仍不可见就强制 show（重复 show 幂等，事件正常时兜底空跑）
+  setTimeout(() => {
+    if (win && !win.isDestroyed() && !win.isVisible()) win.show();
+  }, 5000);
 }
 
+let appMenu = null; // 常驻引用：Windows 隐藏标题栏下 autoHideMenuBar 藏起菜单条，☰ 按钮 popup 用同一份模板
 function buildMenu() {
   const sendAction = (action) => () => send('menu:action', { action });
   const template = [
@@ -464,6 +482,7 @@ function buildMenu() {
             dialog.showMessageBox(win, r.error ? { type: 'error', message: r.error } : { type: 'info', message: r.detail });
           },
         },
+        { label: t('menu.importSessions'), click: sendAction('import-sessions') },
         { type: 'separator' },
         {
           label: t('menu.sessionLog'),
@@ -497,8 +516,17 @@ function buildMenu() {
       submenu: [{ role: 'minimize', label: t('menu.minimize') }, { role: 'zoom', label: t('menu.zoom') }],
     },
   ];
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  appMenu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(appMenu);
 }
+
+/* ---------- Windows 自绘标题栏：三键 + ☰ 菜单按钮 ---------- */
+ipcMain.handle('win:minimize', () => { if (win) win.minimize(); });
+ipcMain.handle('win:maximizeToggle', () => { if (win) (win.isMaximized() ? win.unmaximize() : win.maximize()); });
+ipcMain.handle('win:close', () => { if (win) win.close(); });
+ipcMain.handle('menu:popup', (e) => {
+  if (appMenu) appMenu.popup({ window: BrowserWindow.fromWebContents(e.sender) });
+});
 
 /* ---------- 更新检查：只提示不静默替换（macOS 自更新需正式签名，未签名阶段引导到 Releases） ---------- */
 let updateChecking = false;
@@ -759,6 +787,53 @@ function doImportSSHConfig() {
   return { ok: true, added, detail: added ? t('sshcfg.imported', added) : t('sshcfg.noNew') };
 }
 ipcMain.handle('sshconfig:import', () => doImportSSHConfig());
+
+/* 会话导入：本地解析器（SecureCRT/Xshell/MobaXterm/PuTTY/主机清单）→ 渲染层预览勾选 → 回传落库。
+ * 纯确定性解析，认不出的文本明确报「未识别」，不猜测不硬凑。 */
+ipcMain.handle('import:pick', (e, mode) => (mode === 'folder'
+  ? dialog.showOpenDialog(win, { title: t('import.pickTitle'), properties: ['openDirectory'] })
+  : dialog.showOpenDialog(win, {
+      title: t('import.pickTitle'),
+      properties: ['openFile', 'multiSelections'],
+      filters: [{ name: t('import.filterName'), extensions: ['ini', 'xsh', 'mxtsessions', 'reg', 'csv', 'txt'] }],
+    })).then((r) => (r.canceled ? [] : r.filePaths)));
+ipcMain.handle('import:parse', (e, paths) => {
+  try { return importers.parseFiles(Array.isArray(paths) ? paths : []); } catch (err) {
+    return { items: [], unrecognized: [], warnings: [err.message] };
+  }
+});
+ipcMain.handle('import:apply', (e, items) => {
+  const list = Array.isArray(items) ? items.slice(0, 500) : [];
+  const added = [];
+  let skipped = 0;
+  for (const it of list) {
+    const name = String(it.name || it.host || '').trim();
+    const host = String(it.host || '').trim();
+    if (!name || !host) continue;
+    const group = String(it.group || '').trim();
+    const key = group ? group + '/' + name : name;
+    if (sessions.some((x) => x.key === key)) { skipped++; continue; }
+    added.push({
+      key, name, type: 'ssh', host,
+      port: parseInt(it.port, 10) || 22,
+      user: String(it.user || '').trim() || 'root',
+      target: host,
+      tuser: String(it.user || '').trim(),
+      group,
+      post: '',
+      password: '', // 各来源密码均为密文无法迁移：导入后首次连接时输入
+      auth: ['password', 'key', 'agent'].includes(it.auth) ? it.auth : 'password',
+      keyPath: String(it.keyPath || '').trim(),
+      keyPass: '',
+    });
+  }
+  if (added.length) {
+    sessions.push(...added);
+    saveSessions(sessions);
+    send('sessions:updated', { sessions: publicSessions(sessions) });
+  }
+  return { added: added.length, skipped };
+});
 
 // Snippets
 ipcMain.handle('snippets:list', () => store.listSnippets());

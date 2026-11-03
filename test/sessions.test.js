@@ -6,8 +6,11 @@ const path = require('path');
 
 const FAKE_HOME = fs.mkdtempSync(path.join(os.tmpdir(), 'hubterm-sess-'));
 process.env.HOME = FAKE_HOME;
+// 数据目录走代码真正读取的 HUBTERM_HOME 覆盖——HOME 在 Windows 的 os.homedir() 不生效，
+// 只设 HOME 会让测试读真实用户目录且断言全挂
+process.env.HUBTERM_HOME = path.join(FAKE_HOME, '.hubterm');
 const store = require('../lib/sessions');
-const D = path.join(FAKE_HOME, '.hubterm');
+const D = process.env.HUBTERM_HOME;
 
 const results = [];
 function ok(name, cond, extra) {

@@ -8,8 +8,12 @@ const $ = (sel) => document.querySelector(sel);
 
 /* 平台差异：快捷键提示与终端字体（macOS ⌘ / 其它 Ctrl+；与 main.js 菜单的 CmdOrCtrl 对应） */
 const IS_MAC = /Mac/i.test(navigator.platform);
+const IS_WIN = /Win/i.test(navigator.platform);
 const MOD_LBL = IS_MAC ? '⌘' : 'Ctrl+';
 const TERM_FONT = "'SF Mono', ui-monospace, Menlo, 'Cascadia Code', 'Cascadia Mono', Consolas, monospace";
+// 平台类：Windows 隐藏标题栏 + 自绘三键（body.win 驱动 tabbar 右让位与三键显隐；mac 红绿灯让位收窄）
+if (IS_MAC) document.body.classList.add('mac');
+else if (IS_WIN) document.body.classList.add('win');
 
 /* ================= i18n（lib/i18n.js 提供，主/渲染进程共用字典） ================= */
 const i18n = window.HubI18N;
@@ -180,8 +184,12 @@ function showCtx(e, items) {
   menu.style.top = Math.min(e.clientY, innerHeight - r.height - 8) + 'px';
 }
 function hideCtx() { $('#ctx-menu').classList.add('hidden'); }
-function askConfirm(title, msg, fn, okLabel) {
-  $('#cf-title').textContent = title;
+// 弹窗关闭后把焦点还给活动终端（键盘流：编辑完/连完弹窗直接回家，不必鼠标点回终端）
+function refocusTerminal() {
+  const p = activePane();
+  if (p) p.term.focus();
+}
+function askConfirm(title, msg, fn, okLabel) {  $('#cf-title').textContent = title;
   $('#cf-msg').textContent = msg;
   $('#cf-ok').textContent = okLabel || t('common.ok');
   confirmFn = fn;
@@ -290,6 +298,7 @@ function addGhostTab(s) {
   el.title = s.name;
   el.onclick = (e) => { if (!e.target.classList.contains('t-close')) activateGhost(s.key); };
   el.querySelector('.t-close').onclick = (e) => { e.stopPropagation(); removeGhost(s.key); persistOpenTabs(); };
+  el.addEventListener('auxclick', (e) => { if (e.button === 1) { e.stopPropagation(); removeGhost(s.key); persistOpenTabs(); } });
   el.oncontextmenu = (e) => {
     e.preventDefault();
     showCtx(e, [
@@ -697,15 +706,22 @@ function relayoutTab(tab) {
 }
 
 /* ================= 标签 ================= */
+const openingSessions = new Set(); // 连接握手期间的去重闸：双击/回车连点不再开出两个同会话标签
 async function openSession(s, opts = {}) {
-  const res = await window.hub.openSession(s.key);
-  if (res.error) return toast(res.error, 'err');
-  removeGhost(s.key);
-  const tab = createTab(res.id, res.session);
-  setActiveTab(tab.id);
-  pushRecent(s.key);
-  persistOpenTabs();
-  return tab;
+  if (openingSessions.has(s.key)) return null;
+  openingSessions.add(s.key);
+  try {
+    const res = await window.hub.openSession(s.key);
+    if (res.error) { toast(res.error, 'err'); return null; }
+    removeGhost(s.key);
+    const tab = createTab(res.id, res.session);
+    setActiveTab(tab.id);
+    pushRecent(s.key);
+    persistOpenTabs();
+    return tab;
+  } finally {
+    openingSessions.delete(s.key);
+  }
 }
 
 function createTab(primarySid, info) {
@@ -732,6 +748,8 @@ function createTab(primarySid, info) {
   el.title = info.name;
   el.onclick = (e) => { if (!e.target.classList.contains('t-close')) setActiveTab(primarySid); };
   el.querySelector('.t-close').onclick = (e) => { e.stopPropagation(); closeTab(primarySid); };
+  // 中键关闭（终端客户端惯例）
+  el.addEventListener('auxclick', (e) => { if (e.button === 1) { e.stopPropagation(); closeTab(primarySid); } });
   el.oncontextmenu = (e) => {
     e.preventDefault();
     const thisTab = () => tabs.get(primarySid);
@@ -1310,7 +1328,7 @@ async function doQuickConnect() {
   if (!host) return toast(t('quick.hostRequired'), 'err');
   $('#quick-modal').classList.add('hidden');
   const res = await window.hub.adhoc({ host, port, user, password });
-  if (res.error) return toast(res.error, 'err');
+  if (res.error) { refocusTerminal(); return toast(res.error, 'err'); }
   const tab = createTab(res.id, res.session);
   setActiveTab(tab.id);
 }
@@ -1412,7 +1430,77 @@ async function doSaveSession() {
   });
   if (r.error) return toast(r.error, 'err');
   $('#edit-modal').classList.add('hidden');
+  refocusTerminal();
   toast(editKey ? t('common.saved') : t('edit.created', name), 'ok');
+}
+
+/* ================= 会话导入（SecureCRT / Xshell / MobaXterm / PuTTY / 主机清单） ================= */
+let impRows = []; // [{name,group,host,port,user,auth,keyPath,source,file, checked, exists}]
+function showImport() { impPhase('pick'); $('#import-modal').classList.remove('hidden'); }
+function hideImport() { $('#import-modal').classList.add('hidden'); }
+function impPhase(phase) { // pick | loading | fail | preview
+  for (const p of ['pick', 'loading', 'fail', 'preview']) $(`#imp-${p}`).classList.toggle('hidden', p !== phase);
+  $('#imp-import').classList.toggle('hidden', phase !== 'preview');
+}
+function impFail(msg) {
+  $('#imp-fail-msg').textContent = msg;
+  impPhase('fail');
+}
+/* 已存在判定：group/name 同 key，或 host+port+user 三元组相同（同名不同机仍允许导入） */
+function impMarkExists(items) {
+  const keys = new Set(sessions.map((s) => s.key));
+  const triple = new Set(sessions.map((s) => `${s.host}:${s.port}:${s.user || ''}`));
+  return items.map((s) => {
+    const key = s.group ? `${s.group}/${s.name}` : s.name;
+    const exists = keys.has(key) || triple.has(`${s.host}:${s.port}:${s.user || ''}`);
+    return { ...s, checked: !exists, exists };
+  });
+}
+async function impPick(mode) {
+  const paths = await window.hub.importPick(mode);
+  if (!paths.length) return;
+  await impRun(paths);
+}
+async function impRun(paths) { // 解析 → 预览（拆出便于 --eval 驱动自测）
+  impPhase('loading');
+  let res;
+  try { res = await window.hub.importParse(paths); } catch (e) { impFail(t('import.parseFailed', e?.message || e)); return; }
+  if ($('#import-modal').classList.contains('hidden')) return; // 解析期间被关闭
+  const unrec = $('#imp-unrecognized');
+  unrec.classList.toggle('hidden', !res.unrecognized.length);
+  if (res.unrecognized.length) unrec.textContent = t('import.someUnrecognized', res.unrecognized.length);
+  if (!res.items.length) { impFail(t('import.none')); return; }
+  impRows = impMarkExists(res.items);
+  $('#imp-tbody').innerHTML = impRows.map((r, i) => {
+    const auth = t(r.auth === 'key' ? 'import.auth.key' : 'import.auth.password');
+    return `<tr class="${r.exists ? 'exists' : ''}">` +
+      `<td class="c-check"><input type="checkbox" data-i="${i}" ${r.checked && !r.exists ? 'checked' : ''} ${r.exists ? 'disabled' : ''} ${r.exists ? `title="${t('import.exists')}"` : ''}></td>` +
+      `<td class="imp-name" title="${esc(r.name)}">${esc(r.name)}${r.exists ? `<span class="imp-badge">${t('import.exists')}</span>` : ''}</td>` +
+      `<td class="imp-dim" title="${esc(r.group || '')}">${esc(r.group || '—')}</td>` +
+      `<td class="imp-host" title="${esc(r.host)}">${esc(r.host)}</td>` +
+      `<td class="c-num">${r.port}</td>` +
+      `<td class="imp-dim">${esc(r.user || '—')}</td>` +
+      `<td class="imp-dim">${auth}</td>` +
+      `<td class="imp-dim">${esc(r.source || '')}</td>` +
+      '</tr>';
+  }).join('');
+  impPhase('preview');
+  impUpdateSel();
+}
+function impUpdateSel() {
+  $('#imp-import').disabled = !impRows.some((r) => r.checked && !r.exists);
+  const free = impRows.filter((r) => !r.exists);
+  $('#imp-check-all').checked = free.length > 0 && free.every((r) => r.checked);
+  $('#imp-check-all').disabled = !free.length;
+}
+async function impApply() {
+  const items = impRows.filter((r) => r.checked && !r.exists);
+  if (!items.length) return;
+  $('#imp-import').disabled = true;
+  const r = await window.hub.importApply(items);
+  hideImport();
+  if (r.added) toast(t('import.done', r.added) + (r.skipped ? ' · ' + t('import.skipped', r.skipped) : ''), 'ok');
+  else if (r.skipped) toast(t('import.skipped', r.skipped), 'warn');
 }
 
 /* ================= ZMODEM 面板 ================= */
@@ -1469,7 +1557,8 @@ function findFirst() {
   const q = $('#find-input').value;
   if (!p || !q) return;
   try {
-    p.searchAddon.find(q, {
+    // SearchAddon 0.13 没有 find()（调用会抛 TypeError 被吞掉→增量搜索静默失效），权威 API 是 findNext(q)
+    p.searchAddon.findNext(q, {
       caseSensitive: false,
       decorations: { matchOverviewRuler: '#89b4fa', activeMatchColorOverviewRuler: '#f9e2af' },
     });
@@ -1633,9 +1722,10 @@ function closeTopLayer() {
     ['#snippet-modal', () => $('#snm-cancel').click()],
     ['#fwd-modal', () => $('#fwd-close').click()],
     ['#quick-modal', () => $('#qc-cancel').click()],
+    ['#import-modal', () => hideImport()],
     ['#edit-modal', () => $('#ed-cancel').click()],
     ['#palette-mask', () => closePalette()],
-    ['#help-modal', () => $('#help-modal').classList.add('hidden')],
+    ['#help-modal', () => { $('#help-modal').classList.add('hidden'); refocusTerminal(); }],
     ['#findbar', () => $('#findbar').classList.add('hidden')],
     ['#sftp-drawer', () => toggleSftp(false)],
     ['#snippets-panel', () => $('#snippets-panel').classList.add('hidden')],
@@ -1674,10 +1764,27 @@ function menuAction(action) {
   else if (action === 'paste') pasteClipboard();
   else if (action === 'select-all') selectAll();
   else if (action === 'theme-cycle') cycleTheme();
+  else if (action === 'import-sessions') showImport();
 }
 
 function wireUI() {
   $('#search').addEventListener('input', (e) => renderTree(e.target.value));
+  // 键盘直达：回车连接首个命中会话（与 renderTree 同一匹配字段）；Esc 清词或失焦回终端
+  $('#search').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const q = $('#search').value.trim().toLowerCase();
+      if (!q) return;
+      const hit = sessions.find((s) => s.name.toLowerCase().includes(q) ||
+        (s.target || '').toLowerCase().includes(q) ||
+        (s.user || '').toLowerCase().includes(q) ||
+        (s.group || '').toLowerCase().includes(q));
+      if (hit) openSession(hit);
+    } else if (e.key === 'Escape') {
+      e.stopPropagation(); // 不让全局 esc 链抢（关最上层浮层）
+      if ($('#search').value) { $('#search').value = ''; renderTree(''); }
+      else { $('#search').blur(); refocusTerminal(); }
+    }
+  });
 
   // 树空白处：右键新建根级文件夹；拖放会话/文件夹到空白处 = 移到根
   const treeEl = $('#tree');
@@ -1721,7 +1828,29 @@ function wireUI() {
 
   // 快速连接
   $('#qc-ok').onclick = doQuickConnect;
-  $('#qc-cancel').onclick = () => $('#quick-modal').classList.add('hidden');
+  $('#qc-cancel').onclick = () => { $('#quick-modal').classList.add('hidden'); refocusTerminal(); };
+  // Windows 自绘标题栏：☰ 弹原生菜单（autoHideMenuBar 下菜单条默认藏起），三键走 win IPC；
+  // 标签条双击 = 最大化 / 还原（非交互区域才触发）
+  $('#btn-menu').onclick = () => window.hub.menuPopup();
+  $('#wc-min').onclick = () => window.hub.winMinimize();
+  $('#wc-max').onclick = () => window.hub.winMaximizeToggle();
+  $('#wc-close').onclick = () => window.hub.winClose();
+  $('#tabbar').addEventListener('dblclick', (e) => {
+    if (IS_WIN && !e.target.closest('.tab, .tbtn, #tabbar-actions')) window.hub.winMaximizeToggle();
+  });
+  // 会话导入弹窗
+  $('#imp-pick-files').onclick = () => impPick('files');
+  $('#imp-pick-folder').onclick = () => impPick('folder');
+  $('#imp-again').onclick = () => impPhase('pick');
+  $('#imp-cancel').onclick = hideImport;
+  $('#imp-import').onclick = impApply;
+  $('#imp-check-all').onchange = (e) => { for (const r of impRows) if (!r.exists) r.checked = e.target.checked; impUpdateSel(); };
+  $('#imp-tbody').addEventListener('change', (e) => {
+    const cb = e.target.closest('input[type="checkbox"]');
+    if (!cb) return;
+    const r = impRows[Number(cb.dataset.i)];
+    if (r && !r.exists) { r.checked = cb.checked; impUpdateSel(); }
+  });
   for (const id of ['qc-host', 'qc-port', 'qc-user', 'qc-pass']) {
     $('#' + id).addEventListener('keydown', (e) => {
       if (e.key === 'Enter') doQuickConnect();
@@ -1735,7 +1864,7 @@ function wireUI() {
   $('#w-new').onclick = () => showEdit(null);
   $('#ed-rule-add').onclick = () => $('#ed-rules-list').appendChild(ruleRowEl({}));
   $('#ed-ok').onclick = doSaveSession;
-  $('#ed-cancel').onclick = () => $('#edit-modal').classList.add('hidden');
+  $('#ed-cancel').onclick = () => { $('#edit-modal').classList.add('hidden'); refocusTerminal(); };
   $('#edit-modal').addEventListener('keydown', (e) => {
     if (e.key === 'Escape') $('#edit-modal').classList.add('hidden');
     if (e.key === 'Enter' && e.target.tagName !== 'SELECT') doSaveSession();
@@ -1746,7 +1875,7 @@ function wireUI() {
   $('#sn-close').onclick = () => $('#snippets-panel').classList.add('hidden');
   $('#sn-broadcast').addEventListener('change', renderSnippets);
   $('#snm-ok').onclick = saveSnippetModal;
-  $('#snm-cancel').onclick = () => $('#snippet-modal').classList.add('hidden');
+  $('#snm-cancel').onclick = () => { $('#snippet-modal').classList.add('hidden'); refocusTerminal(); };
   $('#snm-cmd').addEventListener('keydown', (e) => { if (e.key === 'Escape') $('#snippet-modal').classList.add('hidden'); });
 
   // SFTP
@@ -1780,13 +1909,13 @@ function wireUI() {
 
   // 端口转发
   $('#fwd-add-btn').onclick = addForward;
-  $('#fwd-close').onclick = () => $('#fwd-modal').classList.add('hidden');
+  $('#fwd-close').onclick = () => { $('#fwd-modal').classList.add('hidden'); refocusTerminal(); };
   for (const id of ['fwd-listen', 'fwd-host', 'fwd-port']) {
     $('#' + id).addEventListener('keydown', (e) => { if (e.key === 'Enter') addForward(); });
   }
 
   // 帮助/设置
-  $('#help-close').onclick = () => $('#help-modal').classList.add('hidden');
+  $('#help-close').onclick = () => { $('#help-modal').classList.add('hidden'); refocusTerminal(); };
   $('#btn-help').onclick = () => { mcpRefreshUI(); $('#help-modal').classList.remove('hidden'); };
   $('#set-copy-select').addEventListener('change', (e) => savePref('copySelect', e.target.checked));
   $('#set-bell').addEventListener('change', (e) => savePref('bell', e.target.checked));
@@ -1944,6 +2073,7 @@ function wireUI() {
   window.addEventListener('keydown', async (e) => {
     const inModal = !$('#mfa-modal').classList.contains('hidden') ||
                     !$('#quick-modal').classList.contains('hidden') ||
+                    !$('#import-modal').classList.contains('hidden') ||
                     !$('#edit-modal').classList.contains('hidden') ||
                     !$('#snippet-modal').classList.contains('hidden') ||
                     !$('#fwd-modal').classList.contains('hidden') ||

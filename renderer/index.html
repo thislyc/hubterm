@@ -2,6 +2,9 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
+  <!-- CSP：渲染层全部特权走 IPC 不走网络——脚本/样式锁 self（xterm 需内联 style 属性）、禁止远程连接 -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="color-scheme" content="dark light">
   <title>HubTerm</title>
   <link rel="stylesheet" href="../node_modules/xterm/css/xterm.css">
@@ -34,6 +37,9 @@
 
     <main id="main">
       <div id="tabbar">
+        <button class="tbtn" id="btn-menu" data-i18n-title="btn.menu.title" title="应用菜单（Alt 可呼出菜单条）">
+          <svg viewBox="0 0 16 16" width="15" height="15"><path d="M2.5 4h11M2.5 8h11M2.5 12h11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
         <div id="tabs"></div>
         <div id="tabbar-spacer"></div>
         <div id="tabbar-actions">
@@ -75,6 +81,19 @@
         </div>
       </div>
     </main>
+
+    <!-- Windows 自绘窗口控制键（隐藏系统标题栏后替代原生三键；mac/linux 隐藏） -->
+    <div id="win-controls">
+      <button id="wc-min" data-i18n-title="win.min.title" title="最小化">
+        <svg viewBox="0 0 12 12" width="12" height="12"><path d="M1 6h10" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+      </button>
+      <button id="wc-max" data-i18n-title="win.max.title" title="最大化 / 还原">
+        <svg viewBox="0 0 12 12" width="12" height="12"><rect x="1.5" y="1.5" width="9" height="9" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+      </button>
+      <button id="wc-close" data-i18n-title="win.close.title" title="关闭">
+        <svg viewBox="0 0 12 12" width="12" height="12"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
   </div>
 
   <!-- 快速打开面板 -->
@@ -156,6 +175,54 @@
       <div class="modal-actions">
         <button id="qc-cancel" class="btn-ghost" data-i18n="common.cancel">取消</button>
         <button id="qc-ok" class="btn-primary" data-i18n="quick.connect">连接</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 导入其他终端的会话（SecureCRT / Xshell / MobaXterm / PuTTY / 主机清单） -->
+  <div id="import-modal" class="modal-mask hidden">
+    <div class="modal wide">
+      <h2 data-i18n="import.title">导入其他终端的会话</h2>
+
+      <div id="imp-pick">
+        <div class="imp-btns">
+          <button id="imp-pick-files" class="btn-primary" data-i18n="import.pickFiles">选择文件…</button>
+          <button id="imp-pick-folder" class="btn-ghost" data-i18n="import.pickFolder">选择文件夹…</button>
+        </div>
+        <p id="imp-hint" data-i18n="import.pickHint"></p>
+        <p id="imp-pwd-note" class="imp-note" data-i18n="import.pwdNote"></p>
+      </div>
+
+      <div id="imp-loading" class="hidden"><span class="imp-spin"></span><span id="imp-loading-text" data-i18n="import.parsing">正在解析…</span></div>
+
+      <div id="imp-fail" class="hidden">
+        <p id="imp-fail-msg"></p>
+        <div class="modal-actions"><button id="imp-again" class="btn-ghost" data-i18n="import.again">重新选择</button></div>
+      </div>
+
+      <div id="imp-preview" class="hidden">
+        <p id="imp-unrecognized" class="imp-note hidden"></p>
+        <div class="imp-table-wrap">
+          <table class="imp-table">
+            <thead><tr>
+              <th class="c-check"><input id="imp-check-all" type="checkbox"></th>
+              <th data-i18n="import.col.name">名称</th>
+              <th data-i18n="import.col.group">分组</th>
+              <th data-i18n="import.col.host">主机</th>
+              <th class="c-num" data-i18n="import.col.port">端口</th>
+              <th data-i18n="import.col.user">用户</th>
+              <th data-i18n="import.col.auth">认证</th>
+              <th data-i18n="import.col.source">来源</th>
+            </tr></thead>
+            <tbody id="imp-tbody"></tbody>
+          </table>
+        </div>
+        <p class="imp-note" data-i18n="import.pwdNote"></p>
+      </div>
+
+      <div class="modal-actions">
+        <button id="imp-cancel" class="btn-ghost" data-i18n="common.cancel">取消</button>
+        <button id="imp-import" class="btn-primary hidden" data-i18n="import.importBtn">导入所选</button>
       </div>
     </div>
   </div>

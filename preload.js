@@ -12,6 +12,10 @@ contextBridge.exposeInMainWorld('hub', {
   deleteSession: (key) => ipcRenderer.invoke('session:delete', key),
   openSession: (key) => ipcRenderer.invoke('session:open', key),
   adhoc: (cfg) => ipcRenderer.invoke('adhoc:open', cfg),
+  // 会话导入（本地解析器：SecureCRT/Xshell/MobaXterm/PuTTY/主机清单）
+  importPick: (mode) => ipcRenderer.invoke('import:pick', mode),
+  importParse: (paths) => ipcRenderer.invoke('import:parse', paths),
+  importApply: (items) => ipcRenderer.invoke('import:apply', items),
   // 连接
   write: (id, data) => ipcRenderer.send('session:write', { id, data }),
   resize: (id, rows, cols) => ipcRenderer.send('session:resize', { id, rows, cols }),
@@ -57,6 +61,11 @@ contextBridge.exposeInMainWorld('hub', {
   onMcpStatus: (cb) => ipcRenderer.on('mcp:status', (e, d) => cb(d)),
   // 语言（渲染层切换时同步主进程：菜单/对话框 + settings.json 持久化）
   setLang: (lang) => ipcRenderer.send('lang:set', lang),
+  // Windows 自绘标题栏：三键与 ☰ 菜单按钮（autoHideMenuBar 下菜单条藏起，按钮弹同一份模板）
+  winMinimize: () => ipcRenderer.invoke('win:minimize'),
+  winMaximizeToggle: () => ipcRenderer.invoke('win:maximizeToggle'),
+  winClose: () => ipcRenderer.invoke('win:close'),
+  menuPopup: () => ipcRenderer.invoke('menu:popup'),
   // 事件
   onData: (cb) => ipcRenderer.on('session:data', (e, d) => cb(d)),
   onStatus: (cb) => ipcRenderer.on('session:status', (e, d) => cb(d)),
