@@ -61,14 +61,26 @@ try_curl() {
     curl -sS -f "$@" || curl -sS -f "$@"
   fi
 }
-RELEASE_JSON=$(try_curl -X POST -H "Authorization: token $TOKEN" -H "Accept: application/vnd.github+json" \
-  https://api.github.com/repos/thislyc/hubterm/releases \
-  -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"generate_release_notes\":true}")
+# tag 已有 Release 时复用（重跑发版 / 跨机补传平台产物场景），否则新建
+RELEASE_JSON=$(try_curl -H "Authorization: token $TOKEN" -H "Accept: application/vnd.github+json" \
+  "https://api.github.com/repos/thislyc/hubterm/releases/tags/$TAG" 2>/dev/null) || RELEASE_JSON=""
+if [ -n "$RELEASE_JSON" ] && printf '%s' "$RELEASE_JSON" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{process.exit(JSON.parse(d).id?0:1)}catch(e){process.exit(1)}})"; then
+  echo "    复用已存在的 Release $TAG"
+else
+  RELEASE_JSON=$(try_curl -X POST -H "Authorization: token $TOKEN" -H "Accept: application/vnd.github+json" \
+    https://api.github.com/repos/thislyc/hubterm/releases \
+    -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"generate_release_notes\":true}")
+fi
 RELEASE_ID=$(printf '%s' "$RELEASE_JSON" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const j=JSON.parse(d);if(!j.id){console.error('创建 Release 失败:',j.message);process.exit(1)}console.log(j.id)})")
 UPLOAD_URL=$(printf '%s' "$RELEASE_JSON" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>console.log(JSON.parse(d).upload_url.split('{')[0]))")
+EXISTING_ASSETS=$(printf '%s' "$RELEASE_JSON" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const j=JSON.parse(d);console.log((j.assets||[]).map(a=>a.name).join('\n'))})")
 
 for f in "$OUT"/*.zip; do
   NAME=$(basename "$f")
+  if printf '%s\n' "$EXISTING_ASSETS" | grep -qxF "$NAME"; then
+    echo "    跳过 $NAME（Release 里已有同名产物）"
+    continue
+  fi
   echo "    上传 $NAME ($(du -h "$f" | cut -f1))"
   try_curl -X POST -H "Authorization: token $TOKEN" -H "Content-Type: application/octet-stream" \
     --data-binary @"$f" "$UPLOAD_URL?name=$NAME" >/dev/null
